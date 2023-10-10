@@ -14,14 +14,14 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
     <PackageTags>memory-cache;partitioned-cache;managed-cache;fast-cache;cache;memory</PackageTags>
     <PackageReleaseNotes>
-      Disposable partitioned memory cache.
+      Added configurable partitioned memory constructor.
     </PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Company>NetworkDLS</Company>
-    <AssemblyVersion>1.1.3</AssemblyVersion>
-    <FileVersion>1.1.3</FileVersion>
-    <VersionPrefix>1.1.3</VersionPrefix>
+    <AssemblyVersion>1.1.4</AssemblyVersion>
+    <FileVersion>1.1.4</FileVersion>
+    <VersionPrefix>1.1.4</VersionPrefix>
     <version></version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>

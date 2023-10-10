@@ -30,6 +30,26 @@ namespace NTDLS.FastMemoryCache
             }
         }
 
+        public PartitionedMemoryCache(PartitionedCacheConfiguration configuration)
+        {
+            _configuration = configuration.Clone();
+            _partitions = new SingleMemoryCache[_configuration.PartitionCount];
+
+            int maxMemoryPerPartition = (int)(_configuration.MaxMemoryMegabytes / (double)_configuration.PartitionCount);
+
+            var singleConfiguration = new SingleCacheConfiguration
+            {
+                MaxMemoryMegabytes = maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
+                ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
+                IsCaseSensitive = _configuration.IsCaseSensitive
+            };
+
+            for (int i = 0; i < PartitionCount; i++)
+            {
+                _partitions[i] = new SingleMemoryCache(singleConfiguration);
+            }
+        }
+
         #region IDisposable
 
         private bool _disposed = false;
