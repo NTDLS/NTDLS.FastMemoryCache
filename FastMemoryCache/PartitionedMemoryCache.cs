@@ -2,14 +2,13 @@
 
 namespace NTDLS.FastMemoryCache
 {
-    public class PartitionedMemoryCache
+    public class PartitionedMemoryCache : IDisposable
     {
         private readonly SingleMemoryCache[] _partitions;
 
         public int PartitionCount { get; private set; }
 
         private readonly PartitionedCacheConfiguration _configuration;
-
 
         public PartitionedMemoryCache()
         {
@@ -31,13 +30,32 @@ namespace NTDLS.FastMemoryCache
             }
         }
 
-        public void Close()
+        #region IDisposable
+
+        private bool _disposed = false;
+
+        public void Dispose()
         {
-            for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
             {
-                _partitions[partitionIndex].Dispose();
+                if (disposing)
+                {
+                    for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+                    {
+                        _partitions[partitionIndex].Dispose();
+                    }
+                }
+                _disposed = true;
             }
         }
+
+        #endregion
 
         public void Clear()
         {
