@@ -6,8 +6,6 @@ namespace NTDLS.FastMemoryCache
     {
         private readonly SingleMemoryCache[] _partitions;
 
-        public int PartitionCount { get; private set; }
-
         private readonly PartitionedCacheConfiguration _configuration;
 
         public PartitionedMemoryCache()
@@ -24,7 +22,7 @@ namespace NTDLS.FastMemoryCache
                 IsCaseSensitive = _configuration.IsCaseSensitive
             };
 
-            for (int i = 0; i < PartitionCount; i++)
+            for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 _partitions[i] = new SingleMemoryCache(singleConfiguration);
             }
@@ -44,7 +42,7 @@ namespace NTDLS.FastMemoryCache
                 IsCaseSensitive = _configuration.IsCaseSensitive
             };
 
-            for (int i = 0; i < PartitionCount; i++)
+            for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 _partitions[i] = new SingleMemoryCache(singleConfiguration);
             }
@@ -66,7 +64,7 @@ namespace NTDLS.FastMemoryCache
             {
                 if (disposing)
                 {
-                    for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+                    for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
                     {
                         _partitions[partitionIndex].Dispose();
                     }
@@ -79,7 +77,7 @@ namespace NTDLS.FastMemoryCache
 
         public void Clear()
         {
-            for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
             {
                 _partitions[partitionIndex].Clear();
             }
@@ -89,10 +87,10 @@ namespace NTDLS.FastMemoryCache
         {
             var result = new CachePartitionAllocationStats
             {
-                PartitionCount = PartitionCount
+                PartitionCount = _configuration.PartitionCount,
             };
 
-            for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
             {
                 lock (_partitions[partitionIndex])
                 {
@@ -113,10 +111,10 @@ namespace NTDLS.FastMemoryCache
         {
             var result = new CachePartitionAllocationDetails
             {
-                PartitionCount = PartitionCount
+                PartitionCount = _configuration.PartitionCount
             };
 
-            for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
             {
                 lock (_partitions[partitionIndex])
                 {
@@ -146,7 +144,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -161,7 +159,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -176,7 +174,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -191,7 +189,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -206,7 +204,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -221,7 +219,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -236,7 +234,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -251,7 +249,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
             {
@@ -267,7 +265,7 @@ namespace NTDLS.FastMemoryCache
                 key = key.ToLower();
             }
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             int itemsEjected = 0;
 
@@ -289,7 +287,7 @@ namespace NTDLS.FastMemoryCache
                 prefix = prefix.ToLower();
             }
 
-            for (int i = 0; i < PartitionCount; i++)
+            for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
