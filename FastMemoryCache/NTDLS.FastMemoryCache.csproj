@@ -14,14 +14,14 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
     <PackageTags>memory-cache;partitioned-cache;managed-cache;fast-cache;cache;memory</PackageTags>
     <PackageReleaseNotes>
-      Spelling....
+      Changed internal->Public.
     </PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Company>NetworkDLS</Company>
-    <AssemblyVersion>1.1.1</AssemblyVersion>
-    <FileVersion>1.1.1</FileVersion>
-    <VersionPrefix>1.1.1</VersionPrefix>
+    <AssemblyVersion>1.1.2</AssemblyVersion>
+    <FileVersion>1.1.2</FileVersion>
+    <VersionPrefix>1.1.2</VersionPrefix>
     <version></version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>

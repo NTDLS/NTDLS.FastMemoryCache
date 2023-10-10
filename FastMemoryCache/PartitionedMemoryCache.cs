@@ -2,9 +2,8 @@
 
 namespace NTDLS.FastMemoryCache
 {
-    internal class PartitionedMemoryCache
+    public class PartitionedMemoryCache
     {
-
         private readonly SingleMemoryCache[] _partitions;
 
         public int PartitionCount { get; private set; }
