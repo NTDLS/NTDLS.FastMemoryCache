@@ -4,11 +4,11 @@ using System.Text.Json;
 
 namespace NTDLS.FastMemoryCache
 {
-    public class PartitionedCache : IDisposable
+    public class SingleMemoryCache : IDisposable
     {
-        private readonly CriticalResource<Dictionary<string, PartitonedMemoryCaheItem>> _collection = new();
+        private readonly CriticalResource<Dictionary<string, SingleMemoryCacheItem>> _collection = new();
         private readonly Timer _timer;
-        private readonly PartitionedCacheConfiguration _configuration;
+        private readonly SingleCacheConfiguration _configuration;
 
         #region IDisposable
 
@@ -34,10 +34,9 @@ namespace NTDLS.FastMemoryCache
 
         #endregion
 
-
         public List<string> CloneCacheKeys() => _collection.Use((obj) => obj.Select(o => o.Key).ToList());
 
-        public Dictionary<string, PartitonedMemoryCaheItem> CloneCacheItems() =>
+        public Dictionary<string, SingleMemoryCacheItem> CloneCacheItems() =>
             _collection.Use((obj) => obj.ToDictionary(
                 kvp => kvp.Key,
                 kvp => kvp.Value.Clone()
@@ -46,16 +45,16 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Initializes a new memory cache with the default configuration.
         /// </summary>
-        public PartitionedCache()
+        public SingleMemoryCache()
         {
-            _configuration = new PartitionedCacheConfiguration();
+            _configuration = new SingleCacheConfiguration();
             _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
         }
 
         /// <summary>
         /// Initializes a new memory cache with the default configuration.
         /// </summary>
-        public PartitionedCache(PartitionedCacheConfiguration configuration)
+        public SingleMemoryCache(SingleCacheConfiguration configuration)
         {
             _configuration = configuration.Clone();
             _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
@@ -98,8 +97,8 @@ namespace NTDLS.FastMemoryCache
         }
 
         public double SizeInMegabytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0));
-        public double MaxSizeInMegabytes() => (_configuration.MaxMemoryMegabytes / _configuration.ParitionCount);
-        public double MaxSizeInKilobytes() => (_configuration.MaxMemoryMegabytes / _configuration.ParitionCount) * 1024.0;
+        public double MaxSizeInMegabytes() => (_configuration.MaxMemoryMegabytes);
+        public double MaxSizeInKilobytes() => (_configuration.MaxMemoryMegabytes) * 1024.0;
         public double SizeInKilobytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0));
         public int Count() => _collection.Use((obj) => obj.Count);
         public bool Contains(string key) => _collection.Use((obj) => obj.ContainsKey(key));
@@ -108,6 +107,11 @@ namespace NTDLS.FastMemoryCache
 
         public object Get(string key)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             return _collection.Use((obj) =>
             {
                 var result = obj[key];
@@ -119,6 +123,11 @@ namespace NTDLS.FastMemoryCache
 
         public T Get<T>(string key)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             return (T)_collection.Use((obj) =>
             {
                 var result = obj[key];
@@ -130,6 +139,11 @@ namespace NTDLS.FastMemoryCache
 
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             var cachedItem = _collection.Use((obj) =>
             {
                 if (obj.ContainsKey(key))
@@ -157,6 +171,11 @@ namespace NTDLS.FastMemoryCache
 
         public object? TryGet(string key)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             return _collection.Use((obj) =>
             {
                 if (obj.ContainsKey(key))
@@ -172,6 +191,11 @@ namespace NTDLS.FastMemoryCache
 
         public void Upsert<T>(string key, T value)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
@@ -191,13 +215,18 @@ namespace NTDLS.FastMemoryCache
                 }
                 else
                 {
-                    obj.Add(key, new PartitonedMemoryCaheItem(value, aproximateSizeInBytes));
+                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
                 }
             });
         }
 
         public void Upsert(string key, object value)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
@@ -217,13 +246,18 @@ namespace NTDLS.FastMemoryCache
                 }
                 else
                 {
-                    obj.Add(key, new PartitonedMemoryCaheItem(value, aproximateSizeInBytes));
+                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
                 }
             });
         }
 
         public void Upsert(string key, object value, int aproximateSizeInBytes = 0)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
@@ -241,13 +275,18 @@ namespace NTDLS.FastMemoryCache
                 }
                 else
                 {
-                    obj.Add(key, new PartitonedMemoryCaheItem(value, aproximateSizeInBytes));
+                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
                 }
             });
         }
 
         public void Upsert<T>(string key, T value, int aproximateSizeInBytes = 0)
         {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
             if (value == null)
             {
                 throw new ArgumentNullException(nameof(value));
@@ -265,8 +304,27 @@ namespace NTDLS.FastMemoryCache
                 }
                 else
                 {
-                    obj.Add(key, new PartitonedMemoryCaheItem(value, aproximateSizeInBytes));
+                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
                 }
+            });
+        }
+
+        public void RemoveItemsWithPrefix(string prefix)
+        {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                prefix = prefix.ToLower();
+            }
+
+            _collection.Use(obj =>
+            {
+                var keysToRemove = CloneCacheKeys().Where(entry => entry.StartsWith(prefix)).ToList();
+
+                foreach (var key in keysToRemove)
+                {
+                    obj.Remove(key);
+                }
+
             });
         }
     }

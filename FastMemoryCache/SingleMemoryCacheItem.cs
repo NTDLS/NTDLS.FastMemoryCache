@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.FastMemoryCache
 {
-    public class PartitonedMemoryCaheItem
+    public class SingleMemoryCacheItem
     {
         public object Value { get; set; }
         public int AproximateSizeInBytes { get; set; }
@@ -10,7 +10,7 @@
         public DateTime? LastSetDate { get; set; }
         public DateTime? LastGetDate { get; set; }
 
-        public PartitonedMemoryCaheItem(object value)
+        public SingleMemoryCacheItem(object value)
         {
             Value = value;
             Created = DateTime.UtcNow;
@@ -19,7 +19,7 @@
             SetCount = 1;
         }
 
-        public PartitonedMemoryCaheItem(object value, int aproximateSizeInBytes)
+        public SingleMemoryCacheItem(object value, int aproximateSizeInBytes)
         {
             Value = value;
             Created = DateTime.UtcNow;
@@ -29,9 +29,9 @@
             AproximateSizeInBytes = aproximateSizeInBytes;
         }
 
-        public PartitonedMemoryCaheItem Clone()
+        public SingleMemoryCacheItem Clone()
         {
-            return new PartitonedMemoryCaheItem(Value, AproximateSizeInBytes)
+            return new SingleMemoryCacheItem(Value, AproximateSizeInBytes)
             {
                 GetCount = GetCount,
                 SetCount = SetCount,
