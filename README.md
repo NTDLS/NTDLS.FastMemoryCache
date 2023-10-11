@@ -22,3 +22,6 @@ public string ReadFileFromDisk(string path)
     return fileContents;
 }
 ```
+
+## License
+[Apache-2.0](https://choosealicense.com/licenses/apache-2.0/)

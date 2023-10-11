@@ -5,6 +5,8 @@ VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.FastMemoryCache", "FastMemoryCache\NTDLS.FastMemoryCache.csproj", "{D9E6DF11-43FE-4D33-A2FC-0202DBF8FB84}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHarness", "TestHarness\TestHarness.csproj", "{DDA96D4E-79E9-41BF-A744-2B64E6F956F9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{D9E6DF11-43FE-4D33-A2FC-0202DBF8FB84}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9E6DF11-43FE-4D33-A2FC-0202DBF8FB84}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9E6DF11-43FE-4D33-A2FC-0202DBF8FB84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDA96D4E-79E9-41BF-A744-2B64E6F956F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDA96D4E-79E9-41BF-A744-2B64E6F956F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDA96D4E-79E9-41BF-A744-2B64E6F956F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDA96D4E-79E9-41BF-A744-2B64E6F956F9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

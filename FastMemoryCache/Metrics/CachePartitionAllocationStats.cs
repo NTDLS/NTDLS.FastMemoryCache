@@ -1,4 +1,4 @@
-﻿namespace NTDLS.FastMemoryCache
+﻿namespace NTDLS.FastMemoryCache.Metrics
 {
     public class CachePartitionAllocationStats
     {

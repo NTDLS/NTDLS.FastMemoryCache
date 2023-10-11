@@ -1,12 +1,14 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using NTDLS.FastMemoryCache.Metrics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.FastMemoryCache
 {
     public class PartitionedMemoryCache : IDisposable
     {
         private readonly SingleMemoryCache[] _partitions;
-
         private readonly PartitionedCacheConfiguration _configuration;
+
+        #region Ctor.
 
         public PartitionedMemoryCache()
         {
@@ -48,6 +50,8 @@ namespace NTDLS.FastMemoryCache
             }
         }
 
+        #endregion
+
         #region IDisposable
 
         private bool _disposed = false;
@@ -75,12 +79,81 @@ namespace NTDLS.FastMemoryCache
 
         #endregion
 
-        public void Clear()
+        #region Metrics.
+
+        public int Count()
         {
-            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
+            int totalVlaue = 0;
+
+            for (int i = 0; i < _configuration.PartitionCount; i++)
             {
-                _partitions[partitionIndex].Clear();
+                lock (_partitions[i])
+                {
+                    totalVlaue += _partitions[i].Count();
+                }
             }
+
+            return totalVlaue;
+        }
+
+        public double SizeInMegabytes()
+        {
+            double totalVlaue = 0;
+
+            for (int i = 0; i < _configuration.PartitionCount; i++)
+            {
+                lock (_partitions[i])
+                {
+                    totalVlaue += _partitions[i].SizeInMegabytes();
+                }
+            }
+
+            return totalVlaue;
+        }
+
+        public double MaxSizeInMegabytes()
+        {
+            double totalVlaue = 0;
+
+            for (int i = 0; i < _configuration.PartitionCount; i++)
+            {
+                lock (_partitions[i])
+                {
+                    totalVlaue += _partitions[i].MaxSizeInMegabytes();
+                }
+            }
+
+            return totalVlaue;
+        }
+
+        public double MaxSizeInKilobytes()
+        {
+            double totalVlaue = 0;
+
+            for (int i = 0; i < _configuration.PartitionCount; i++)
+            {
+                lock (_partitions[i])
+                {
+                    totalVlaue += _partitions[i].MaxSizeInKilobytes();
+                }
+            }
+
+            return totalVlaue;
+        }
+
+        public double SizeInKilobytes()
+        {
+            double totalVlaue = 0;
+
+            for (int i = 0; i < _configuration.PartitionCount; i++)
+            {
+                lock (_partitions[i])
+                {
+                    totalVlaue += _partitions[i].SizeInKilobytes();
+                }
+            }
+
+            return totalVlaue;
         }
 
         public CachePartitionAllocationStats GetPartitionAllocationStatistics()
@@ -120,7 +193,7 @@ namespace NTDLS.FastMemoryCache
                 {
                     foreach (var item in _partitions[partitionIndex].CloneCacheItems())
                     {
-                        result.Partitions.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetail(item.Key)
+                        result.Items.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetailItem(item.Key)
                         {
                             Partition = partitionIndex,
                             AproximateSizeInBytes = item.Value.AproximateSizeInBytes,
@@ -135,6 +208,30 @@ namespace NTDLS.FastMemoryCache
             }
 
             return result;
+        }
+
+        #endregion
+
+        #region Getters.
+
+        public bool Contains(string key)
+        {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+
+            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+
+            lock (_partitions[partitionIndex])
+            {
+                if (_partitions[partitionIndex].Contains(key))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public object Get(string key)
@@ -167,6 +264,10 @@ namespace NTDLS.FastMemoryCache
             }
         }
 
+        #endregion
+
+        #region TryGetters.
+
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
             if (_configuration.IsCaseSensitive == false)
@@ -196,6 +297,10 @@ namespace NTDLS.FastMemoryCache
                 return _partitions[partitionIndex].TryGet(key);
             }
         }
+
+        #endregion
+
+        #region Upserters.
 
         public void Upsert<T>(string key, T value)
         {
@@ -257,6 +362,9 @@ namespace NTDLS.FastMemoryCache
             }
         }
 
+        #endregion
+
+        #region Removers and Clear.
 
         public int Remove(string key)
         {
@@ -295,5 +403,15 @@ namespace NTDLS.FastMemoryCache
                 }
             }
         }
+
+        public void Clear()
+        {
+            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
+            {
+                _partitions[partitionIndex].Clear();
+            }
+        }
+
+        #endregion
     }
 }

@@ -42,6 +42,8 @@ namespace NTDLS.FastMemoryCache
                 kvp => kvp.Value.Clone()
             ));
 
+        #region CTor.
+
         /// <summary>
         /// Initializes a new memory cache with the default configuration.
         /// </summary>
@@ -59,6 +61,8 @@ namespace NTDLS.FastMemoryCache
             _configuration = configuration.Clone();
             _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
         }
+
+        #endregion
 
         private void TimerTickCallback(object? state)
         {
@@ -96,14 +100,31 @@ namespace NTDLS.FastMemoryCache
             }
         }
 
-        public double SizeInMegabytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0));
-        public double MaxSizeInMegabytes() => (_configuration.MaxMemoryMegabytes);
-        public double MaxSizeInKilobytes() => (_configuration.MaxMemoryMegabytes) * 1024.0;
-        public double SizeInKilobytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0));
+        #region Metrics.
+
         public int Count() => _collection.Use((obj) => obj.Count);
-        public bool Contains(string key) => _collection.Use((obj) => obj.ContainsKey(key));
-        public bool Remove(string key) => _collection.Use((obj) => obj.Remove(key));
-        public void Clear() => _collection.Use((obj) => obj.Clear());
+        public double SizeInMegabytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0));
+        public double MaxSizeInMegabytes() => _configuration.MaxMemoryMegabytes;
+        public double MaxSizeInKilobytes() => _configuration.MaxMemoryMegabytes * 1024.0;
+        public double SizeInKilobytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0));
+
+        #endregion
+
+        #region Getters.
+
+        /// <summary>
+        /// Returns true if the suppled key is found in the cache.
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public bool Contains(string key)
+        {
+            if (_configuration.IsCaseSensitive == false)
+            {
+                key = key.ToLower();
+            }
+            return _collection.Use((obj) => obj.ContainsKey(key));
+        }
 
         public object Get(string key)
         {
@@ -136,6 +157,10 @@ namespace NTDLS.FastMemoryCache
                 return result.Value;
             });
         }
+
+        #endregion
+
+        #region TryGetters.
 
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
@@ -189,6 +214,10 @@ namespace NTDLS.FastMemoryCache
             });
         }
 
+        #endregion
+
+        #region Upserters.
+
         public void Upsert<T>(string key, T value)
         {
             if (_configuration.IsCaseSensitive == false)
@@ -201,7 +230,7 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            int aproximateSizeInBytes = JsonSerializer.SerializeToUtf8Bytes(value).Length;
+            var aproximateSizeInBytes = Helpers.EstimateObjectSize(value);
 
             _collection.Use(obj =>
             {
@@ -232,7 +261,7 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            int aproximateSizeInBytes = JsonSerializer.SerializeToUtf8Bytes(value).Length;
+            var aproximateSizeInBytes = Helpers.EstimateObjectSize(value);
 
             _collection.Use(obj =>
             {
@@ -309,6 +338,13 @@ namespace NTDLS.FastMemoryCache
             });
         }
 
+        #endregion
+
+        #region Removers / Clear.
+
+        public bool Remove(string key) => _collection.Use((obj) => obj.Remove(key));
+        public void Clear() => _collection.Use((obj) => obj.Clear());
+
         public void RemoveItemsWithPrefix(string prefix)
         {
             if (_configuration.IsCaseSensitive == false)
@@ -327,5 +363,7 @@ namespace NTDLS.FastMemoryCache
 
             });
         }
+
+        #endregion
     }
 }

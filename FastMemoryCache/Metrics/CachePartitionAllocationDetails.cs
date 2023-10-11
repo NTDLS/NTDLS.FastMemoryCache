@@ -1,14 +1,14 @@
-﻿namespace NTDLS.FastMemoryCache
+﻿namespace NTDLS.FastMemoryCache.Metrics
 {
     public class CachePartitionAllocationDetails
     {
         public int PartitionCount { get; set; }
 
-        public List<CachePartitionAllocationDetail> Partitions { get; private set; } = new();
+        public List<CachePartitionAllocationDetailItem> Items { get; private set; } = new();
 
-        public class CachePartitionAllocationDetail
+        public class CachePartitionAllocationDetailItem
         {
-            public CachePartitionAllocationDetail(string key)
+            public CachePartitionAllocationDetailItem(string key)
             {
                 Key = key;
             }
