@@ -36,8 +36,6 @@ namespace TestHarness
                 Console.WriteLine($"Items: {items:n0} -> {size:n2}MB");
                 Thread.Sleep(1000);
             }
-
-            Console.Read();
         }
 
         public static void FloodCache()

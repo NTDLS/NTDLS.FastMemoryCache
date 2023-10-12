@@ -3,14 +3,17 @@ using System.Runtime.InteropServices;
 
 namespace NTDLS.FastMemoryCache
 {
-    static public class Helpers
+    /// <summary>
+    /// Various static functions for determining the size of .net objects.
+    /// </summary>
+    static public class Estimations
     {
         /// <summary>
         /// Estimates the amount of memory that would be consumed by a class instance.
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        static public int EstimateObjectSize(object? obj)
+        static public int ObjectSize(object? obj)
         {
             if (obj == null)
             {
@@ -28,7 +31,7 @@ namespace NTDLS.FastMemoryCache
                 var fieldType = field.FieldType;
                 var fieldValue = field.GetValue(obj);
 
-                totalSize += EstimateObjectFieldSize(fieldType, fieldValue);
+                totalSize += ObjectFieldSize(fieldType, fieldValue);
             }
 
             return totalSize;
@@ -40,7 +43,7 @@ namespace NTDLS.FastMemoryCache
         /// <param name="type"></param>
         /// <param name="obj"></param>
         /// <returns></returns>
-        static public int EstimateObjectFieldSize(Type? type, object? obj)
+        static public int ObjectFieldSize(Type? type, object? obj)
         {
             if (type == null || obj == null)
             {
@@ -55,7 +58,7 @@ namespace NTDLS.FastMemoryCache
                 }
                 else if (type.IsGenericType)
                 {
-                    return EstimateObjectSize(obj);
+                    return ObjectSize(obj);
                 }
                 else
                 {
@@ -79,7 +82,7 @@ namespace NTDLS.FastMemoryCache
                         var arrayValue = array.GetValue(i);
                         var arrayElementType = arrayValue?.GetType();
 
-                        totalSize += EstimateObjectFieldSize(arrayElementType, arrayValue);
+                        totalSize += ObjectFieldSize(arrayElementType, arrayValue);
                     }
                 }
 
@@ -87,7 +90,7 @@ namespace NTDLS.FastMemoryCache
             }
             else
             {
-                return EstimateObjectSize(obj);
+                return ObjectSize(obj);
             }
         }
     }

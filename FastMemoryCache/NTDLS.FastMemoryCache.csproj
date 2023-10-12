@@ -3,25 +3,26 @@
   <PropertyGroup>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <Title>NTDLS.FastMemoryCache</Title>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
     <Description>
-      Provides fast and easy to use partitioned memory cache for .net that helps manage the maximum size and track performance.
+      Provides fast and easy to use thread-safe partitioned memory cache for .net that helps manage the maximum size and track performance.
     </Description>
     <PackageProjectUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
     <PackageTags>memory-cache;partitioned-cache;managed-cache;fast-cache;cache;memory</PackageTags>
     <PackageReleaseNotes>
-      Added new metrics, added new access methods, faster size calculations.
+      Added net 6, 7 and documentation and lots of new metriocs.
     </PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Company>NetworkDLS</Company>
-    <AssemblyVersion>1.3.0</AssemblyVersion>
-    <FileVersion>1.3.0</FileVersion>
-    <VersionPrefix>1.3.0</VersionPrefix>
+    <AssemblyVersion>1.4.0</AssemblyVersion>
+    <FileVersion>1.4.0</FileVersion>
+    <VersionPrefix>1.4.0</VersionPrefix>
     <version></version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
@@ -44,6 +45,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NTDLS.Semaphore" Version="1.3.2" />
+    <PackageReference Include="NTDLS.Semaphore" Version="1.5.0" />
   </ItemGroup>
 </Project>
