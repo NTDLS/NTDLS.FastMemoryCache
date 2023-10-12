@@ -1,5 +1,5 @@
 # NTDLS.FastMemoryCache
-Provides fast and easy to use partitioned memory cache for C# that helps manage the maximum size and track performance.
+Provides fast and easy to use thread-safe partitioned memory cache for C# that helps manage the maximum size and track performance.
 
 >**Quick and easy eample of a file cache:**
 >
