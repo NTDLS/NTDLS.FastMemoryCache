@@ -6,12 +6,12 @@
     public class SingleCacheConfiguration
     {
         /// <summary>
-        /// The number of seconds between attempts to sure-up the set memory limits.
+        /// The number of seconds between attempts to sure-up the set memory limits. 0 = no scavenging.
         /// </summary>
-        public int ScavengeIntervalSeconds { get; set; } = 30;
+        public int ScavengeIntervalSeconds { get; set; } = 10;
 
         /// <summary>
-        /// The number of seconds between attempts to sure-up the set memory limits.
+        /// The number of seconds between attempts to sure-up the set memory limits. 0 = no limit.
         /// </summary>
         public int MaxMemoryMegabytes { get; set; } = 4096;
 

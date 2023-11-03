@@ -33,7 +33,7 @@ namespace NTDLS.FastMemoryCache
 
             var singleConfiguration = new SingleCacheConfiguration
             {
-                MaxMemoryMegabytes = maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
+                MaxMemoryMegabytes = _configuration.MaxMemoryMegabytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
                 ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
                 IsCaseSensitive = _configuration.IsCaseSensitive
             };
@@ -57,7 +57,7 @@ namespace NTDLS.FastMemoryCache
 
             var singleConfiguration = new SingleCacheConfiguration
             {
-                MaxMemoryMegabytes = maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
+                MaxMemoryMegabytes = _configuration.MaxMemoryMegabytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
                 ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
                 IsCaseSensitive = _configuration.IsCaseSensitive
             };

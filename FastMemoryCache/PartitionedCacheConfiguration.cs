@@ -11,12 +11,12 @@
         public int PartitionCount { get; set; } = Environment.ProcessorCount * 4;
 
         /// <summary>
-        /// The number of seconds between attempts to sure-up the set memory limits.
+        /// The number of seconds between attempts to sure-up the set memory limits. 0 = no scavenging.
         /// </summary>
-        public int ScavengeIntervalSeconds { get; set; } = 30;
+        public int ScavengeIntervalSeconds { get; set; } = 10;
 
         /// <summary>
-        /// The maximum size of the memory cache. The cache will attempt to keep the cache to this size.
+        /// The maximum size of the memory cache. The cache will attempt to keep the cache to this size. 0 = no limit.
         /// </summary>
         public int MaxMemoryMegabytes { get; set; } = 4096;
 

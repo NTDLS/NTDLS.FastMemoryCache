@@ -9,7 +9,7 @@ namespace NTDLS.FastMemoryCache
     public class SingleMemoryCache : IDisposable
     {
         private readonly CriticalResource<Dictionary<string, SingleMemoryCacheItem>> _collection = new();
-        private readonly Timer _timer;
+        private readonly Timer? _timer;
         private readonly SingleCacheConfiguration _configuration;
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace NTDLS.FastMemoryCache
                 if (disposing)
                 {
                     _collection.Use((obj) => obj.Clear());
-                    _timer.Dispose();
+                    _timer?.Dispose();
                 }
                 _disposed = true;
             }
@@ -72,7 +72,10 @@ namespace NTDLS.FastMemoryCache
         public SingleMemoryCache()
         {
             _configuration = new SingleCacheConfiguration();
-            _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
+            if (_configuration.ScavengeIntervalSeconds > 0)
+            {
+                _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
+            }
         }
 
         /// <summary>
@@ -81,13 +84,21 @@ namespace NTDLS.FastMemoryCache
         public SingleMemoryCache(SingleCacheConfiguration configuration)
         {
             _configuration = configuration.Clone();
-            _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
+            if (_configuration.ScavengeIntervalSeconds > 0)
+            {
+                _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds), TimeSpan.FromSeconds(_configuration.ScavengeIntervalSeconds));
+            }
         }
 
         #endregion
 
         private void TimerTickCallback(object? state)
         {
+            if (_configuration.MaxMemoryMegabytes <= 0)
+            {
+                return;
+            }
+
             var sizeInMegabytes = SizeInMegabytes();
             if (sizeInMegabytes > _configuration.MaxMemoryMegabytes)
             {
