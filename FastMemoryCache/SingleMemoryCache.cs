@@ -8,7 +8,7 @@ namespace NTDLS.FastMemoryCache
     /// </summary>
     public class SingleMemoryCache : IDisposable
     {
-        private readonly CriticalResource<Dictionary<string, SingleMemoryCacheItem>> _collection = new();
+        private readonly PessimisticSemaphore<Dictionary<string, SingleMemoryCacheItem>> _collection = new();
         private readonly Timer? _timer;
         private readonly SingleCacheConfiguration _configuration;
 
