@@ -66,10 +66,9 @@ namespace TestHarness
                     }
                 };
 
-                _cache.Upsert(cacheKey, car);
+                _cache.Upsert(cacheKey, car, TimeSpan.FromMilliseconds(100));
             }
         }
-
 
         static string RandomString(int length)
         {
@@ -86,6 +85,5 @@ namespace TestHarness
 
             return randomString.ToString();
         }
-
     }
 }

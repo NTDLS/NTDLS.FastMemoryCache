@@ -11,6 +11,7 @@ namespace NTDLS.FastMemoryCache
         private readonly PessimisticSemaphore<Dictionary<string, SingleMemoryCacheItem>> _collection = new();
         private readonly Timer? _timer;
         private readonly SingleCacheConfiguration _configuration;
+        private bool _currentlyCleaning = false;
 
         /// <summary>
         /// Returns a cloned copy of the configuration.
@@ -94,40 +95,70 @@ namespace NTDLS.FastMemoryCache
 
         private void TimerTickCallback(object? state)
         {
-            if (_configuration.MaxMemoryMegabytes <= 0)
+            if (_timer == null)
             {
                 return;
             }
 
-            var sizeInMegabytes = SizeInMegabytes();
-            if (sizeInMegabytes > _configuration.MaxMemoryMegabytes)
+            lock (_timer)
             {
+                if (_currentlyCleaning == true)
+                {
+                    return;
+                }
+                _currentlyCleaning = true;
+            }
+
+            try
+            {
+                if (_configuration.MaxMemoryMegabytes <= 0)
+                {
+                    return;
+                }
+
+                var sizeInMegabytes = SizeInMegabytes();
+
                 _collection.TryUse(50, (obj) =>
                 {
                     //When we reach our set memory pressure, we will remove the least recently hit items from cache.
                     //TODO: since we have the hit count, update count, etc. maybe we can make this more intelligent?
 
-                    var oldestGottenItems = obj.OrderBy(o => o.Value.LastGetDate)
-                        .Select(o => new
-                        {
-                            o.Key,
-                            o.Value.AproximateSizeInBytes
-                        }
-                        ).ToList();
-
                     double objectSizeSummation = 0;
                     double spaceNeededToClear = (sizeInMegabytes - _configuration.MaxMemoryMegabytes) * 1024.0 * 1024.0;
 
-                    foreach (var item in oldestGottenItems)
+                    //Remove expired objects:
+                    foreach (var item in obj.Where(o => o.Value.IsExpired).Select(o => new ItemToRemove(o.Key, o.Value.AproximateSizeInBytes, true)))
                     {
                         Remove(item.Key);
-                        objectSizeSummation += item.AproximateSizeInBytes;
-                        if (objectSizeSummation >= spaceNeededToClear)
+                        sizeInMegabytes -= item.AproximateSizeInBytes / 1024 / 1024;
+                    }
+
+                    //If we are still over memory limit, remove items until we are under the memory limit:
+                    if (sizeInMegabytes > _configuration.MaxMemoryMegabytes)
+                    {
+                        foreach (var item in obj.OrderBy(o => o.Value.LastGetDate).Select(o => new ItemToRemove(o.Key, o.Value.AproximateSizeInBytes)))
                         {
-                            break;
+                            Remove(item.Key);
+                            objectSizeSummation += item.AproximateSizeInBytes;
+                            if (item.Expired)
+                            {
+                                continue; //We want tp remove all expired items before we check spaceNeededToClear.
+                            }
+
+                            if (objectSizeSummation >= spaceNeededToClear)
+                            {
+                                break;
+                            }
                         }
                     }
                 });
+            }
+            finally
+            {
+                lock (_timer)
+                {
+                    _currentlyCleaning = false;
+                }
             }
         }
 
@@ -168,7 +199,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns true if the suppled key is found in the cache.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public bool Contains(string key)
         {
@@ -182,7 +213,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public object Get(string key)
         {
@@ -203,8 +234,8 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public T Get<T>(string key)
         {
@@ -229,8 +260,8 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="cachedObject"></param>
         /// <returns></returns>
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
@@ -268,7 +299,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public object? TryGet(string key)
         {
@@ -297,11 +328,12 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public void Upsert<T>(string key, T value)
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -313,7 +345,7 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            var aproximateSizeInBytes = Estimations.ObjectSize(value);
+            aproximateSizeInBytes ??= Estimations.ObjectSize(value);
 
             _collection.Use(obj =>
             {
@@ -323,11 +355,11 @@ namespace NTDLS.FastMemoryCache
                     cacheItem.Value = value;
                     cacheItem.SetCount++;
                     cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.AproximateSizeInBytes = aproximateSizeInBytes;
+                    cacheItem.AproximateSizeInBytes = (int)aproximateSizeInBytes;
                 }
                 else
                 {
-                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
+                    obj.Add(key, new SingleMemoryCacheItem(value, (int)aproximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
                 }
             });
         }
@@ -335,10 +367,11 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public void Upsert(string key, object value)
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert(string key, object value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -350,7 +383,7 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            var aproximateSizeInBytes = Estimations.ObjectSize(value);
+            aproximateSizeInBytes ??= Estimations.ObjectSize(value);
 
             _collection.Use(obj =>
             {
@@ -360,11 +393,11 @@ namespace NTDLS.FastMemoryCache
                     cacheItem.Value = value;
                     cacheItem.SetCount++;
                     cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.AproximateSizeInBytes = aproximateSizeInBytes;
+                    cacheItem.AproximateSizeInBytes = (int)aproximateSizeInBytes;
                 }
                 else
                 {
-                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
+                    obj.Add(key, new SingleMemoryCacheItem(value, (int)aproximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
                 }
             });
         }
@@ -372,76 +405,50 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="aproximateSizeInBytes"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public void Upsert(string key, object value, int aproximateSizeInBytes = 0)
-        {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            _collection.Use(obj =>
-            {
-                if (obj.ContainsKey(key))
-                {
-                    var cacheItem = obj[key];
-                    cacheItem.Value = value;
-                    cacheItem.SetCount++;
-                    cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.AproximateSizeInBytes = aproximateSizeInBytes;
-                }
-                else
-                {
-                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
-                }
-            });
-        }
-
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        public void Upsert<T>(string key, T value) => Upsert<T>(key, value, null, null);
 
         /// <summary>
         /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="aproximateSizeInBytes"></param>
-        /// <exception cref="ArgumentNullException"></exception>
-        public void Upsert<T>(string key, T value, int aproximateSizeInBytes = 0)
-        {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes) => Upsert<T>(key, value, aproximateSizeInBytes, null);
 
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert<T>(string key, T value, TimeSpan? timeToLive) => Upsert<T>(key, value, null, timeToLive);
 
-            _collection.Use(obj =>
-            {
-                if (obj.ContainsKey(key))
-                {
-                    var cacheItem = obj[key];
-                    cacheItem.Value = value;
-                    cacheItem.SetCount++;
-                    cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.AproximateSizeInBytes = aproximateSizeInBytes;
-                }
-                else
-                {
-                    obj.Add(key, new SingleMemoryCacheItem(value, aproximateSizeInBytes));
-                }
-            });
-        }
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        public void Upsert(string key, object value) => Upsert(key, value, null, null);
+
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        public void Upsert(string key, object value, int? aproximateSizeInBytes) => Upsert(key, value, aproximateSizeInBytes, null);
+
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert(string key, object value, TimeSpan? timeToLive) => Upsert(key, value, null, timeToLive);
 
         #endregion
 
@@ -450,16 +457,19 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Removes an item from the cache if it is found, returns true if found and removed.
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <returns>True of the item was removed from cache.</returns>
         public bool Remove(string key) => _collection.Use((obj) => obj.Remove(key));
 
         /// <summary>
         /// Removes all itemsfrom the cache that start with the given string, returns the count of items found and removed.
         /// </summary>
-        /// <param name="prefix"></param>
-        public void RemoveItemsWithPrefix(string prefix)
+        /// <param name="prefix">The beginning of the cache key to look for when removing cache items.</param>
+        /// <returns>The number of items that were removed from cache.</returns>
+        public int RemoveItemsWithPrefix(string prefix)
         {
+            int itemsRemoved = 0;
+
             if (_configuration.IsCaseSensitive == false)
             {
                 prefix = prefix.ToLower();
@@ -471,10 +481,14 @@ namespace NTDLS.FastMemoryCache
 
                 foreach (var key in keysToRemove)
                 {
-                    obj.Remove(key);
+                    if (obj.Remove(key))
+                    {
+                        itemsRemoved++;
+                    }
                 }
-
             });
+
+            return itemsRemoved;
         }
 
         /// <summary>

@@ -11,6 +11,11 @@
         public object Value { get; set; }
 
         /// <summary>
+        /// The number of milliseconds from insertion, update or last read that the item should live in cache. 0 = infinite.
+        /// </summary>
+        public int TimeToLiveMilliseconds { get; set; } = 0;
+
+        /// <summary>
         /// The aproximate size of the cached item in memory.
         /// </summary>
         public int AproximateSizeInBytes { get; set; }
@@ -41,9 +46,28 @@
         public DateTime? LastGetDate { get; set; }
 
         /// <summary>
+        /// Returns true if the cache item has expired according to its TimeToLiveSeconds.
+        /// </summary>
+        public bool IsExpired
+        {
+            get
+            {
+                if (TimeToLiveMilliseconds > 0)
+                {
+                    var greatestDate = LastSetDate > LastGetDate ? LastSetDate : LastGetDate;
+                    if (greatestDate != null)
+                    {
+                        return (DateTime.UtcNow- ((DateTime)greatestDate)).TotalMilliseconds > TimeToLiveMilliseconds;
+                    }
+                }
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Creates an instance of the cache item using a reference to the to-be-cached object.
         /// </summary>
-        /// <param name="value"></param>
+        /// <param name="value">The value to store in the cache.</param>
         public SingleMemoryCacheItem(object value)
         {
             Value = value;
@@ -56,15 +80,17 @@
         /// <summary>
         /// Creates an instance of the cache item using a reference to the to-be-cached object.
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="aproximateSizeInBytes"></param>
-        public SingleMemoryCacheItem(object value, int aproximateSizeInBytes)
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="timeToLiveSeconds">The number of seconds from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public SingleMemoryCacheItem(object value, int aproximateSizeInBytes, int timeToLiveSeconds)
         {
             Value = value;
             Created = DateTime.UtcNow;
             LastSetDate = Created;
             LastGetDate = Created;
             SetCount = 1;
+            TimeToLiveMilliseconds = timeToLiveSeconds;
             AproximateSizeInBytes = aproximateSizeInBytes;
         }
 
@@ -74,7 +100,7 @@
         /// <returns></returns>
         public SingleMemoryCacheItem Clone()
         {
-            return new SingleMemoryCacheItem(Value, AproximateSizeInBytes)
+            return new SingleMemoryCacheItem(Value, AproximateSizeInBytes, TimeToLiveMilliseconds)
             {
                 GetCount = GetCount,
                 SetCount = SetCount,

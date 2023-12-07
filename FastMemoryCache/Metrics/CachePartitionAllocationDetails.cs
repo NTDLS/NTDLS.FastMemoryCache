@@ -32,7 +32,7 @@
             /// <summary>
             /// Instanciates a new instance of the detail metric.
             /// </summary>
-            /// <param name="key"></param>
+            /// <param name="key">The unique cache key used to identify the item.</param>
             public CachePartitionAllocationDetailItem(string key)
             {
                 Key = key;

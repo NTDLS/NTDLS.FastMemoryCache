@@ -18,7 +18,6 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         public PartitionedCacheConfiguration Configuration => _configuration.Clone();
 
-
         #region Ctor.
 
         /// <summary>
@@ -265,7 +264,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Determines if any of the cache partitons contain a cache item with the supplied key value.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public bool Contains(string key)
         {
@@ -290,7 +289,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public object Get(string key)
         {
@@ -310,8 +309,8 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public T Get<T>(string key)
         {
@@ -335,8 +334,8 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="cachedObject"></param>
         /// <returns></returns>
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
@@ -357,7 +356,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
         /// </summary>
-        /// <param name="key"></param>
+        /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
         public object? TryGet(string key)
         {
@@ -379,12 +378,13 @@ namespace NTDLS.FastMemoryCache
         #region Upserters.
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        public void Upsert<T>(string key, T value)
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert(string key, object value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -395,37 +395,19 @@ namespace NTDLS.FastMemoryCache
 
             lock (_partitions[partitionIndex])
             {
-                _partitions[partitionIndex].Upsert<T>(key, value);
-            }
-        }
-
-        /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        public void Upsert(string key, object value)
-        {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
-
-            lock (_partitions[partitionIndex])
-            {
-                _partitions[partitionIndex].Upsert(key, value);
+                _partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes, timeToLive);
             }
         }
 
         /// <summary>
         /// Inserts an item into the memory cache. If it alreay exists, then it will be updated.
         /// </summary>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="aproximateSizeInBytes"></param>
-        public void Upsert(string key, object value, int aproximateSizeInBytes = 0)
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -436,31 +418,57 @@ namespace NTDLS.FastMemoryCache
 
             lock (_partitions[partitionIndex])
             {
-                _partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes);
+                _partitions[partitionIndex].Upsert<T>(key, value, aproximateSizeInBytes, timeToLive);
             }
         }
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated.
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <param name="aproximateSizeInBytes"></param>
-        public void Upsert<T>(string key, T value, int aproximateSizeInBytes = 0)
-        {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        public void Upsert<T>(string key, T value) => Upsert<T>(key, value, null, null);
 
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes) => Upsert<T>(key, value, aproximateSizeInBytes, null);
 
-            lock (_partitions[partitionIndex])
-            {
-                _partitions[partitionIndex].Upsert<T>(key, value, aproximateSizeInBytes);
-            }
-        }
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert<T>(string key, T value, TimeSpan? timeToLive) => Upsert<T>(key, value, null, timeToLive);
+
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        public void Upsert(string key, object value) => Upsert(key, value, null, null);
+
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        public void Upsert(string key, object value, int? aproximateSizeInBytes) => Upsert(key, value, aproximateSizeInBytes, null);
+
+        /// <summary>
+        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// </summary>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <param name="value">The value to store in the cache.</param>
+        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
+        public void Upsert(string key, object value, TimeSpan? timeToLive) => Upsert(key, value, null, timeToLive);
 
         #endregion
 
@@ -469,8 +477,8 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Removes an item from the cache if it is found, returns true if found and removed.
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="key">The unique cache key used to identify the item.</param>
+        /// <returns>True of the item was removed from cache.</returns>
         public bool Remove(string key)
         {
             if (_configuration.IsCaseSensitive == false)
@@ -489,21 +497,26 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Removes all itemsfrom the cache that start with the given string, returns the count of items found and removed.
         /// </summary>
-        /// <param name="prefix"></param>
-        public void RemoveItemsWithPrefix(string prefix)
+        /// <param name="prefix">The beginning of the cache key to look for when removing cache items.</param>
+        /// <returns>The number of items that were removed from cache.</returns>
+        public int RemoveItemsWithPrefix(string prefix)
         {
             if (_configuration.IsCaseSensitive == false)
             {
                 prefix = prefix.ToLower();
             }
 
+            int itemsRemoved = 0;
+
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
-                    _partitions[i].RemoveItemsWithPrefix(prefix);
+                    itemsRemoved += _partitions[i].RemoveItemsWithPrefix(prefix);
                 }
             }
+
+            return itemsRemoved;
         }
 
         /// <summary>
