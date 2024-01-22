@@ -26,6 +26,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
