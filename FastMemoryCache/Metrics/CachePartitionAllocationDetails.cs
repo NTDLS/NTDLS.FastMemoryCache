@@ -6,7 +6,7 @@
     public class CachePartitionAllocationDetails
     {
         /// <summary>
-        /// The configuration of the partitoned cache instance.
+        /// The configuration of the partitioned cache instance.
         /// </summary>
         public PartitionedCacheConfiguration Configuration { get; internal set; }
 
@@ -49,7 +49,7 @@
             public int Partition { get; set; }
 
             /// <summary>
-            /// The aproximate memory size of the cache item.
+            /// The approximate memory size of the cache item.
             /// </summary>
             public int AproximateSizeInBytes { get; set; }
 

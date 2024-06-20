@@ -16,7 +16,7 @@
         public int TimeToLiveMilliseconds { get; set; } = 0;
 
         /// <summary>
-        /// The aproximate size of the cached item in memory.
+        /// The approximate size of the cached item in memory.
         /// </summary>
         public int AproximateSizeInBytes { get; set; }
 
@@ -29,7 +29,7 @@
         /// The number of times that the cache item has been updated in cache.
         /// </summary>
         public ulong SetCount { get; set; } = 0;
-        
+
         /// <summary>
         /// The UTC date/time that the item was created in cache.
         /// </summary>
@@ -57,7 +57,7 @@
                     var greatestDate = LastSetDate > LastGetDate ? LastSetDate : LastGetDate;
                     if (greatestDate != null)
                     {
-                        return (DateTime.UtcNow- ((DateTime)greatestDate)).TotalMilliseconds > TimeToLiveMilliseconds;
+                        return (DateTime.UtcNow - ((DateTime)greatestDate)).TotalMilliseconds > TimeToLiveMilliseconds;
                     }
                 }
                 return false;
@@ -81,9 +81,9 @@
         /// Creates an instance of the cache item using a reference to the to-be-cached object.
         /// </summary>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
         /// <param name="timeToLiveSeconds">The number of seconds from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public SingleMemoryCacheItem(object value, int aproximateSizeInBytes, int timeToLiveSeconds)
+        public SingleMemoryCacheItem(object value, int approximateSizeInBytes, int timeToLiveSeconds)
         {
             Value = value;
             Created = DateTime.UtcNow;
@@ -91,7 +91,7 @@
             LastGetDate = Created;
             SetCount = 1;
             TimeToLiveMilliseconds = timeToLiveSeconds;
-            AproximateSizeInBytes = aproximateSizeInBytes;
+            AproximateSizeInBytes = approximateSizeInBytes;
         }
 
         /// <summary>

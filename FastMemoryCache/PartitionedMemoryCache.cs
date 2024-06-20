@@ -4,8 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace NTDLS.FastMemoryCache
 {
     /// <summary>
-    /// Defines an instance of a partitoned memory cache. This is basically an array of SingleMemoryCache 
-    /// instances that are all managed independently and accesses are "striped" across the partitons.
+    /// Defines an instance of a partitioned memory cache. This is basically an array of SingleMemoryCache 
+    /// instances that are all managed independently and accesses are "striped" across the partitions.
     /// Partitioning reduces lock time as well as lookup time.
     /// </summary>
     public class PartitionedMemoryCache : IDisposable
@@ -111,17 +111,17 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public int Count()
         {
-            int totalVlaue = 0;
+            int totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
-                    totalVlaue += _partitions[i].Count();
+                    totalValue += _partitions[i].Count();
                 }
             }
 
-            return totalVlaue;
+            return totalValue;
         }
 
         /// <summary>
@@ -130,17 +130,17 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public ulong TotalGetCount()
         {
-            ulong totalVlaue = 0;
+            ulong totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
-                    totalVlaue += _partitions[i].TotalGetCount();
+                    totalValue += _partitions[i].TotalGetCount();
                 }
             }
 
-            return totalVlaue;
+            return totalValue;
         }
 
         /// <summary>
@@ -149,17 +149,17 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public ulong TotalSetCount()
         {
-            ulong totalVlaue = 0;
+            ulong totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
-                    totalVlaue += _partitions[i].TotalSetCount();
+                    totalValue += _partitions[i].TotalSetCount();
                 }
             }
 
-            return totalVlaue;
+            return totalValue;
         }
 
         /// <summary>
@@ -168,17 +168,17 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public double SizeInMegabytes()
         {
-            double totalVlaue = 0;
+            double totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
-                    totalVlaue += _partitions[i].SizeInMegabytes();
+                    totalValue += _partitions[i].SizeInMegabytes();
                 }
             }
 
-            return totalVlaue;
+            return totalValue;
         }
 
         /// <summary>
@@ -187,21 +187,21 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public double SizeInKilobytes()
         {
-            double totalVlaue = 0;
+            double totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
                 lock (_partitions[i])
                 {
-                    totalVlaue += _partitions[i].SizeInKilobytes();
+                    totalValue += _partitions[i].SizeInKilobytes();
                 }
             }
 
-            return totalVlaue;
+            return totalValue;
         }
 
         /// <summary>
-        /// Returns high level statistics about the cache partitons.
+        /// Returns high level statistics about the cache partitions.
         /// </summary>
         /// <returns></returns>
         public CachePartitionAllocationStats GetPartitionAllocationStatistics()
@@ -227,7 +227,7 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Returns detailed level statistics about the cache partitons.
+        /// Returns detailed level statistics about the cache partitions.
         /// </summary>
         /// <returns></returns>
         public CachePartitionAllocationDetails GetPartitionAllocationDetails()
@@ -262,7 +262,7 @@ namespace NTDLS.FastMemoryCache
         #region Getters.
 
         /// <summary>
-        /// Determines if any of the cache partitons contain a cache item with the supplied key value.
+        /// Determines if any of the cache partitions contain a cache item with the supplied key value.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
@@ -332,7 +332,7 @@ namespace NTDLS.FastMemoryCache
         #region TryGetters.
 
         /// <summary>
-        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
+        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise false.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
@@ -354,7 +354,7 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
+        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise false.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
@@ -378,13 +378,13 @@ namespace NTDLS.FastMemoryCache
         #region Upserters.
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert(string key, object value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
+        public void Upsert(string key, object value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -395,19 +395,19 @@ namespace NTDLS.FastMemoryCache
 
             lock (_partitions[partitionIndex])
             {
-                _partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes, timeToLive);
+                _partitions[partitionIndex].Upsert(key, value, approximateSizeInBytes, timeToLive);
             }
         }
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
+        public void Upsert<T>(string key, T value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -418,28 +418,28 @@ namespace NTDLS.FastMemoryCache
 
             lock (_partitions[partitionIndex])
             {
-                _partitions[partitionIndex].Upsert<T>(key, value, aproximateSizeInBytes, timeToLive);
+                _partitions[partitionIndex].Upsert<T>(key, value, approximateSizeInBytes, timeToLive);
             }
         }
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
         public void Upsert<T>(string key, T value) => Upsert<T>(key, value, null, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
-        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes) => Upsert<T>(key, value, aproximateSizeInBytes, null);
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
+        public void Upsert<T>(string key, T value, int? approximateSizeInBytes) => Upsert<T>(key, value, approximateSizeInBytes, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
@@ -448,22 +448,22 @@ namespace NTDLS.FastMemoryCache
         public void Upsert<T>(string key, T value, TimeSpan? timeToLive) => Upsert<T>(key, value, null, timeToLive);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
         public void Upsert(string key, object value) => Upsert(key, value, null, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
-        public void Upsert(string key, object value, int? aproximateSizeInBytes) => Upsert(key, value, aproximateSizeInBytes, null);
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
+        public void Upsert(string key, object value, int? approximateSizeInBytes) => Upsert(key, value, approximateSizeInBytes, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
@@ -495,7 +495,7 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Removes all itemsfrom the cache that start with the given string, returns the count of items found and removed.
+        /// Removes all items from the cache that start with the given string, returns the count of items found and removed.
         /// </summary>
         /// <param name="prefix">The beginning of the cache key to look for when removing cache items.</param>
         /// <returns>The number of items that were removed from cache.</returns>
@@ -520,7 +520,7 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Removes all items from all cache partitons.
+        /// Removes all items from all cache partitions.
         /// </summary>
         public void Clear()
         {

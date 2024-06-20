@@ -6,16 +6,16 @@
         public int AproximateSizeInBytes { get; set; }
         public bool Expired { get; set; }
 
-        public ItemToRemove(string key, int aproximateSizeInBytes)
+        public ItemToRemove(string key, int approximateSizeInBytes)
         {
             Key = key;
-            AproximateSizeInBytes = aproximateSizeInBytes;
+            AproximateSizeInBytes = approximateSizeInBytes;
         }
 
-        public ItemToRemove(string key, int aproximateSizeInBytes, bool expired)
+        public ItemToRemove(string key, int approximateSizeInBytes, bool expired)
         {
             Key = key;
-            AproximateSizeInBytes = aproximateSizeInBytes;
+            AproximateSizeInBytes = approximateSizeInBytes;
             Expired = expired;
         }
     }

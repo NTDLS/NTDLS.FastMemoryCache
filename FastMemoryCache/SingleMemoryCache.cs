@@ -258,7 +258,7 @@ namespace NTDLS.FastMemoryCache
         #region TryGetters.
 
         /// <summary>
-        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
+        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise false.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
@@ -297,7 +297,7 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise fale.
+        /// Attempts to get the cache item with the supplied key value, returns true of found otherwise false.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns></returns>
@@ -326,14 +326,14 @@ namespace NTDLS.FastMemoryCache
         #region Upserters.
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
+        public void Upsert<T>(string key, T value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -345,7 +345,7 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            aproximateSizeInBytes ??= Estimations.ObjectSize(value);
+            approximateSizeInBytes ??= Estimations.ObjectSize(value);
 
             _collection.Use(obj =>
             {
@@ -355,23 +355,23 @@ namespace NTDLS.FastMemoryCache
                     cacheItem.Value = value;
                     cacheItem.SetCount++;
                     cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.AproximateSizeInBytes = (int)aproximateSizeInBytes;
+                    cacheItem.AproximateSizeInBytes = (int)approximateSizeInBytes;
                 }
                 else
                 {
-                    obj.Add(key, new SingleMemoryCacheItem(value, (int)aproximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
+                    obj.Add(key, new SingleMemoryCacheItem(value, (int)approximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
                 }
             });
         }
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert(string key, object value, int? aproximateSizeInBytes, TimeSpan? timeToLive)
+        public void Upsert(string key, object value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
             if (_configuration.IsCaseSensitive == false)
             {
@@ -383,7 +383,7 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            aproximateSizeInBytes ??= Estimations.ObjectSize(value);
+            approximateSizeInBytes ??= Estimations.ObjectSize(value);
 
             _collection.Use(obj =>
             {
@@ -393,33 +393,33 @@ namespace NTDLS.FastMemoryCache
                     cacheItem.Value = value;
                     cacheItem.SetCount++;
                     cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.AproximateSizeInBytes = (int)aproximateSizeInBytes;
+                    cacheItem.AproximateSizeInBytes = (int)approximateSizeInBytes;
                 }
                 else
                 {
-                    obj.Add(key, new SingleMemoryCacheItem(value, (int)aproximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
+                    obj.Add(key, new SingleMemoryCacheItem(value, (int)approximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
                 }
             });
         }
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
         public void Upsert<T>(string key, T value) => Upsert<T>(key, value, null, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
-        public void Upsert<T>(string key, T value, int? aproximateSizeInBytes) => Upsert<T>(key, value, aproximateSizeInBytes, null);
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
+        public void Upsert<T>(string key, T value, int? approximateSizeInBytes) => Upsert<T>(key, value, approximateSizeInBytes, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
@@ -428,22 +428,22 @@ namespace NTDLS.FastMemoryCache
         public void Upsert<T>(string key, T value, TimeSpan? timeToLive) => Upsert<T>(key, value, null, timeToLive);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
         public void Upsert(string key, object value) => Upsert(key, value, null, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="aproximateSizeInBytes">The aproximate size of the object in byets. If NULL, the size will estimated.</param>
-        public void Upsert(string key, object value, int? aproximateSizeInBytes) => Upsert(key, value, aproximateSizeInBytes, null);
+        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
+        public void Upsert(string key, object value, int? approximateSizeInBytes) => Upsert(key, value, approximateSizeInBytes, null);
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it alreay exists, then it will be updated. The size of the object will be estimated.
+        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>

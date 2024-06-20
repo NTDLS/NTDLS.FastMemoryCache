@@ -6,7 +6,7 @@
     public class CachePartitionAllocationStats
     {
         /// <summary>
-        /// The configuration of the partitoned cache instance.
+        /// The configuration of the partitioned cache instance.
         /// </summary>
         public PartitionedCacheConfiguration Configuration { get; internal set; }
 
@@ -30,7 +30,7 @@
         public class CachePartitionAllocationStat
         {
             /// <summary>
-            /// The configuration of the partitoned cache instance.
+            /// The configuration of the partitioned cache instance.
             /// </summary>
             public SingleCacheConfiguration Configuration { get; internal set; }
 
