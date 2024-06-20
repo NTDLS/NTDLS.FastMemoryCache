@@ -20,7 +20,6 @@
     <Authors>NetworkDLS</Authors>
     <Company>NetworkDLS</Company>
     <Version>1.5.2</Version>
-    <version></version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>
