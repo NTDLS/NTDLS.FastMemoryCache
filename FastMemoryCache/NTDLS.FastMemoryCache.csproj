@@ -19,7 +19,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>NetworkDLS</Authors>
     <Company>NetworkDLS</Company>
-    <Version>1.5.2</Version>
+    <Version>1.5.3</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>
@@ -44,6 +44,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="NTDLS.Semaphore" Version="3.3.1" />
+    <PackageReference Include="NTDLS.Semaphore" Version="3.3.2" />
   </ItemGroup>
 </Project>

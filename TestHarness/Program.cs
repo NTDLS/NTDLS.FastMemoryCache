@@ -48,7 +48,7 @@ namespace TestHarness
 
                 if (_random.Next(0, 100) >= 75)
                 {
-                    _cache.TryGet<Car>(cacheKey, out var cachekdItem);
+                    _cache.TryGet<Car>(cacheKey, out var cachedItem);
                 }
 
                 var car = new Car()
@@ -75,7 +75,7 @@ namespace TestHarness
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             StringBuilder randomString = new StringBuilder();
 
-            Random random = new Random();
+            var random = new Random();
 
             for (int i = 0; i < length; i++)
             {

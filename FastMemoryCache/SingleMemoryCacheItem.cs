@@ -1,7 +1,7 @@
 ﻿namespace NTDLS.FastMemoryCache
 {
     /// <summary>
-    /// Defines a cache item instance. This is the item that is stored in the cahce. It keep track of the item and various metrics.
+    /// Defines a cache item instance. This is the item that is stored in the cache. It keep track of the item and various metrics.
     /// </summary>
     public class SingleMemoryCacheItem
     {
@@ -18,10 +18,10 @@
         /// <summary>
         /// The approximate size of the cached item in memory.
         /// </summary>
-        public int AproximateSizeInBytes { get; set; }
+        public int ApproximateSizeInBytes { get; set; }
 
         /// <summary>
-        /// The number of times that the cache item has been retreived from cache.
+        /// The number of times that the cache item has been retrieved from cache.
         /// </summary>
         public ulong GetCount { get; set; } = 0;
 
@@ -41,7 +41,7 @@
         public DateTime? LastSetDate { get; set; }
 
         /// <summary>
-        /// The UTC date/time that the item was last retreived from cache.
+        /// The UTC date/time that the item was last retrieved from cache.
         /// </summary>
         public DateTime? LastGetDate { get; set; }
 
@@ -91,7 +91,7 @@
             LastGetDate = Created;
             SetCount = 1;
             TimeToLiveMilliseconds = timeToLiveSeconds;
-            AproximateSizeInBytes = approximateSizeInBytes;
+            ApproximateSizeInBytes = approximateSizeInBytes;
         }
 
         /// <summary>
@@ -100,7 +100,7 @@
         /// <returns></returns>
         public SingleMemoryCacheItem Clone()
         {
-            return new SingleMemoryCacheItem(Value, AproximateSizeInBytes, TimeToLiveMilliseconds)
+            return new SingleMemoryCacheItem(Value, ApproximateSizeInBytes, TimeToLiveMilliseconds)
             {
                 GetCount = GetCount,
                 SetCount = SetCount,

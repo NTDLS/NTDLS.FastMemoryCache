@@ -243,7 +243,7 @@ namespace NTDLS.FastMemoryCache
                         result.Items.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetailItem(item.Key)
                         {
                             Partition = partitionIndex,
-                            AproximateSizeInBytes = item.Value.AproximateSizeInBytes,
+                            AproximateSizeInBytes = item.Value.ApproximateSizeInBytes,
                             GetCount = item.Value.GetCount,
                             SetCount = item.Value.SetCount,
                             Created = item.Value.Created,
@@ -268,11 +268,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public bool Contains(string key)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -293,11 +288,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public object Get(string key)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -314,11 +304,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public T Get<T>(string key)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -340,11 +325,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -360,11 +340,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public object? TryGet(string key)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -386,11 +361,6 @@ namespace NTDLS.FastMemoryCache
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
         public void Upsert(string key, object value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -409,11 +379,6 @@ namespace NTDLS.FastMemoryCache
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
         public void Upsert<T>(string key, T value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -481,11 +446,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns>True of the item was removed from cache.</returns>
         public bool Remove(string key)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                key = key.ToLower();
-            }
-
             int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
 
             lock (_partitions[partitionIndex])
@@ -501,11 +461,6 @@ namespace NTDLS.FastMemoryCache
         /// <returns>The number of items that were removed from cache.</returns>
         public int RemoveItemsWithPrefix(string prefix)
         {
-            if (_configuration.IsCaseSensitive == false)
-            {
-                prefix = prefix.ToLower();
-            }
-
             int itemsRemoved = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
