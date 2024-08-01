@@ -228,7 +228,7 @@ namespace NTDLS.FastMemoryCache
                             Reads = item.Value.GetCount,
                             Writes = item.Value.SetCount,
                             Created = item.Value.Created,
-                            LastWriteDate = item.Value.LastSetDate,
+                            LastWrite = item.Value.LastSetDate,
                             LastRead = item.Value.LastGetDate,
                         });
                     }

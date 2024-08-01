@@ -71,7 +71,7 @@
             /// <summary>
             /// The UTC date/time that the item was last updated in cache.
             /// </summary>
-            public DateTime? LastWriteDate { get; set; }
+            public DateTime? LastWrite { get; set; }
 
             /// <summary>
             /// The UTC date/time that the item was last retrieved from cache.
