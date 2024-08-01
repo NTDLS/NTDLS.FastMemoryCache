@@ -36,6 +36,12 @@ namespace NTDLS.FastMemoryCache
 
             int maxMemoryPerPartition = (int)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
 
+            int minMemoryPerPartition = SingleMemoryCache.MinimumMemorySizePerPartition;
+            if (maxMemoryPerPartition < minMemoryPerPartition)
+            {
+                maxMemoryPerPartition = minMemoryPerPartition;
+            }
+
             var singleConfiguration = new SingleCacheConfiguration
             {
                 MaxMemoryBytes = _configuration.MaxMemoryBytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
@@ -59,6 +65,12 @@ namespace NTDLS.FastMemoryCache
             _partitions = new SingleMemoryCache[_configuration.PartitionCount];
 
             int maxMemoryPerPartition = (int)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
+
+            int minMemoryPerPartition = SingleMemoryCache.MinimumMemorySizePerPartition;
+            if (maxMemoryPerPartition < minMemoryPerPartition)
+            {
+                maxMemoryPerPartition = minMemoryPerPartition;
+            }
 
             var singleConfiguration = new SingleCacheConfiguration
             {

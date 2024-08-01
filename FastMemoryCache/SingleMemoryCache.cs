@@ -8,6 +8,11 @@ namespace NTDLS.FastMemoryCache
     /// </summary>
     public class SingleMemoryCache : IDisposable
     {
+        /// <summary>
+        /// The minimum amount of memory that can be allocated to a single partition.
+        /// </summary>
+        public const int MinimumMemorySizePerPartition = 1024 * 512;
+
         private readonly PessimisticCriticalResource<Dictionary<string, SingleMemoryCacheItem>> _collection;
         private readonly Timer? _timer;
         private readonly SingleCacheConfiguration _configuration;
@@ -73,6 +78,12 @@ namespace NTDLS.FastMemoryCache
         {
             _configuration = new SingleCacheConfiguration();
 
+            int minMemoryPerPartition = MinimumMemorySizePerPartition;
+            if (_configuration.MaxMemoryBytes < minMemoryPerPartition)
+            {
+                _configuration.MaxMemoryBytes = minMemoryPerPartition;
+            }
+
             if (_configuration.IsCaseSensitive)
             {
                 _collection = new(new Dictionary<string, SingleMemoryCacheItem>(StringComparer.Ordinal));
@@ -91,11 +102,17 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Initializes a new memory cache with the default configuration.
+        /// Initializes a new memory cache with the given configuration.
         /// </summary>
         public SingleMemoryCache(SingleCacheConfiguration configuration)
         {
             _configuration = configuration.Clone();
+
+            int minMemoryPerPartition = MinimumMemorySizePerPartition;
+            if (_configuration.MaxMemoryBytes < minMemoryPerPartition)
+            {
+                _configuration.MaxMemoryBytes = minMemoryPerPartition;
+            }
 
             if (_configuration.IsCaseSensitive)
             {
