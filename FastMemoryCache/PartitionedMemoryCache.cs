@@ -18,6 +18,12 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         public PartitionedCacheConfiguration Configuration => _configuration.Clone();
 
+        /// <summary>
+        /// Computes the partition for a given key. This must be case insensitive.
+        /// </summary>
+        private int GetKeyPartition(string key)
+            => Math.Abs(key.ToLowerInvariant().GetHashCode() % _configuration.PartitionCount);
+
         #region Ctor.
 
         /// <summary>
@@ -268,7 +274,7 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public bool Contains(string key)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -288,7 +294,7 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public object Get(string key)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -304,7 +310,7 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public T Get<T>(string key)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -325,7 +331,7 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -340,7 +346,7 @@ namespace NTDLS.FastMemoryCache
         /// <returns></returns>
         public object? TryGet(string key)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -361,7 +367,7 @@ namespace NTDLS.FastMemoryCache
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
         public void Upsert(string key, object value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -379,7 +385,7 @@ namespace NTDLS.FastMemoryCache
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
         public void Upsert<T>(string key, T value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
@@ -446,7 +452,7 @@ namespace NTDLS.FastMemoryCache
         /// <returns>True of the item was removed from cache.</returns>
         public bool Remove(string key)
         {
-            int partitionIndex = Math.Abs(key.GetHashCode() % _configuration.PartitionCount);
+            int partitionIndex = GetKeyPartition(key);
 
             lock (_partitions[partitionIndex])
             {
