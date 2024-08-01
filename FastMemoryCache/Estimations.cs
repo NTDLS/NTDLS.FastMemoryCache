@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
+
 namespace NTDLS.FastMemoryCache
 {
     /// <summary>
@@ -8,11 +9,15 @@ namespace NTDLS.FastMemoryCache
     /// </summary>
     static public class Estimations
     {
+        private static readonly SingleMemoryCache _reflectionCache = new(
+            new SingleCacheConfiguration()
+            {
+                TrackObjectSize = false
+            });
+
         /// <summary>
         /// Estimates the amount of memory that would be consumed by a class instance.
         /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
         static public int ObjectSize(object? obj)
         {
             if (obj == null)
@@ -24,7 +29,11 @@ namespace NTDLS.FastMemoryCache
 
             var type = obj.GetType();
 
-            var fieldsAndProperties = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (_reflectionCache.TryGet(type.Name, out FieldInfo[]? fieldsAndProperties) == false)
+            {
+                fieldsAndProperties = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                _reflectionCache.Upsert(type.Name, fieldsAndProperties, TimeSpan.FromSeconds(60));
+            }
 
             foreach (var field in fieldsAndProperties)
             {
@@ -40,9 +49,6 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Estimates the amount of memory that would be consumed by a field in a class instance.
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="obj"></param>
-        /// <returns></returns>
         static public int ObjectFieldSize(Type? type, object? obj)
         {
             if (type == null || obj == null)
@@ -74,8 +80,7 @@ namespace NTDLS.FastMemoryCache
             {
                 int totalSize = 0;
 
-                var array = obj as Array;
-                if (array != null)
+                if (obj is Array array)
                 {
                     for (int i = 0; i < array.Length; i++)
                     {

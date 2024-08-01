@@ -13,7 +13,7 @@
         /// <summary>
         /// The number of seconds between attempts to sure-up the set memory limits. 0 = no limit.
         /// </summary>
-        public int MaxMemoryMegabytes { get; set; } = 4096;
+        public int MaxMemoryBytes { get; set; } = 4194304;
 
         /// <summary>
         /// Whether the cache keys are treated as case sensitive or not.
@@ -21,16 +21,21 @@
         public bool IsCaseSensitive { get; set; } = true;
 
         /// <summary>
+        /// Whether or not the cache should track object size for memory limitations and cache ejections.
+        /// </summary>
+        public bool TrackObjectSize { get; set; } = true;
+
+        /// <summary>
         /// Returns a copy of the configuration instance.
         /// </summary>
-        /// <returns></returns>
         public SingleCacheConfiguration Clone()
         {
             return new SingleCacheConfiguration()
             {
-                MaxMemoryMegabytes = MaxMemoryMegabytes,
+                MaxMemoryBytes = MaxMemoryBytes,
                 ScavengeIntervalSeconds = ScavengeIntervalSeconds,
-                IsCaseSensitive = IsCaseSensitive
+                IsCaseSensitive = IsCaseSensitive,
+                TrackObjectSize = TrackObjectSize
             };
         }
     }

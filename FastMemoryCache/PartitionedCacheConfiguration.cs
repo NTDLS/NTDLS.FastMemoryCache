@@ -18,7 +18,7 @@
         /// <summary>
         /// The maximum size of the memory cache. The cache will attempt to keep the cache to this size. 0 = no limit.
         /// </summary>
-        public int MaxMemoryMegabytes { get; set; } = 4096;
+        public int MaxMemoryBytes { get; set; } = 4096;
 
         /// <summary>
         /// Whether the cache keys are treated as case sensitive or not.
@@ -28,12 +28,11 @@
         /// <summary>
         /// Returns a copy of the configuration instance.
         /// </summary>
-        /// <returns></returns>
         public PartitionedCacheConfiguration Clone()
         {
             return new PartitionedCacheConfiguration()
             {
-                MaxMemoryMegabytes = MaxMemoryMegabytes,
+                MaxMemoryBytes = MaxMemoryBytes,
                 PartitionCount = PartitionCount,
                 ScavengeIntervalSeconds = ScavengeIntervalSeconds,
                 IsCaseSensitive = IsCaseSensitive

@@ -1,7 +1,7 @@
 ﻿namespace NTDLS.FastMemoryCache.Metrics
 {
     /// <summary>
-    /// Holds configration and performance metrics information about each item in the cache.
+    /// Holds configuration and performance metrics information about each item in the cache.
     /// </summary>
     public class CachePartitionAllocationDetails
     {
@@ -16,7 +16,7 @@
         public List<CachePartitionAllocationDetailItem> Items { get; private set; } = new();
 
         /// <summary>
-        /// Instanciates a new instance of the allocation details.
+        /// Instantiates a new instance of the allocation details.
         /// </summary>
         /// <param name="configuration"></param>
         public CachePartitionAllocationDetails(PartitionedCacheConfiguration configuration)
@@ -30,7 +30,7 @@
         public class CachePartitionAllocationDetailItem
         {
             /// <summary>
-            /// Instanciates a new instance of the detail metric.
+            /// Instantiates a new instance of the detail metric.
             /// </summary>
             /// <param name="key">The unique cache key used to identify the item.</param>
             public CachePartitionAllocationDetailItem(string key)
@@ -51,17 +51,17 @@
             /// <summary>
             /// The approximate memory size of the cache item.
             /// </summary>
-            public int AproximateSizeInBytes { get; set; }
+            public int ApproximateSizeInBytes { get; set; }
 
             /// <summary>
-            /// The number of times that the cache item has been retreived from cache.
+            /// The number of times that the cache item has been retrieved from cache.
             /// </summary>
-            public ulong GetCount { get; set; } = 0;
+            public ulong Reads { get; set; } = 0;
 
             /// <summary>
             /// The number of times that the cache item has been updated in cache.
             /// </summary>
-            public ulong SetCount { get; set; } = 0;
+            public ulong Writes { get; set; } = 0;
 
             /// <summary>
             /// The UTC date/time that the item was created in cache.
@@ -71,12 +71,12 @@
             /// <summary>
             /// The UTC date/time that the item was last updated in cache.
             /// </summary>
-            public DateTime? LastSetDate { get; set; }
+            public DateTime? LastWriteDate { get; set; }
 
             /// <summary>
-            /// The UTC date/time that the item was last retreived from cache.
+            /// The UTC date/time that the item was last retrieved from cache.
             /// </summary>
-            public DateTime? LastGetDate { get; set; }
+            public DateTime? LastRead { get; set; }
         }
     }
 }

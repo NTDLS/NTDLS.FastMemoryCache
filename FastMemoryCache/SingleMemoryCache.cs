@@ -52,13 +52,11 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns a copy of all of the lookup keys defined in the cache.
         /// </summary>
-        /// <returns></returns>
         public List<string> CloneCacheKeys() => _collection.Use((obj) => obj.Select(o => o.Key).ToList());
 
         /// <summary>
         /// Returns copies of all items contained in the cache.
         /// </summary>
-        /// <returns></returns>
         public Dictionary<string, SingleMemoryCacheItem> CloneCacheItems() =>
             _collection.Use((obj) => obj.ToDictionary(
                 kvp => kvp.Key,
@@ -136,43 +134,49 @@ namespace NTDLS.FastMemoryCache
 
             try
             {
-                if (_configuration.MaxMemoryMegabytes <= 0)
+                if (_configuration.MaxMemoryBytes <= 0)
                 {
                     return;
                 }
 
-                var sizeInMegabytes = SizeInMegabytes();
+                var totalSizeInBytes = ApproximateSizeInBytes();
 
                 _collection.TryUse(50, (obj) =>
                 {
                     //When we reach our set memory pressure, we will remove the least recently hit items from cache.
                     //TODO: since we have the hit count, update count, etc. maybe we can make this more intelligent?
 
-                    double objectSizeSummation = 0;
-                    double spaceNeededToClear = (sizeInMegabytes - _configuration.MaxMemoryMegabytes) * 1024.0 * 1024.0;
+                    var expiredItems = obj.Where(o => o.Value.IsExpired)
+                                        .Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes, true));
 
                     //Remove expired objects:
-                    foreach (var item in obj.Where(o => o.Value.IsExpired).Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes, true)))
+                    foreach (var item in expiredItems)
                     {
                         Remove(item.Key);
-                        sizeInMegabytes -= item.ApproximateSizeInBytes / 1024 / 1024;
+                        totalSizeInBytes -= item.ApproximateSizeInBytes;
                     }
 
-                    //If we are still over memory limit, remove items until we are under the memory limit:
-                    if (sizeInMegabytes > _configuration.MaxMemoryMegabytes)
+                    if (_configuration.TrackObjectSize)
                     {
-                        foreach (var item in obj.OrderBy(o => o.Value.LastGetDate).Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes)))
-                        {
-                            Remove(item.Key);
-                            objectSizeSummation += item.ApproximateSizeInBytes;
-                            if (item.Expired)
-                            {
-                                continue; //We want tp remove all expired items before we check spaceNeededToClear.
-                            }
+                        double spaceNeededToClear = (totalSizeInBytes - _configuration.MaxMemoryBytes);
+                        double objectSizeSummation = 0;
 
-                            if (objectSizeSummation >= spaceNeededToClear)
+                        //If we are still over memory limit, remove items until we are under the memory limit:
+                        if (totalSizeInBytes > _configuration.MaxMemoryBytes)
+                        {
+                            foreach (var item in obj.OrderBy(o => o.Value.LastGetDate).Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes)))
                             {
-                                break;
+                                Remove(item.Key);
+                                objectSizeSummation += item.ApproximateSizeInBytes;
+                                if (item.Expired)
+                                {
+                                    continue; //We want to remove all expired items before we check spaceNeededToClear.
+                                }
+
+                                if (objectSizeSummation >= spaceNeededToClear)
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
@@ -192,13 +196,11 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns the count of items stored in the cache.
         /// </summary>
-        /// <returns></returns>
         public int Count() => _collection.Use((obj) => obj.Count);
 
         /// <summary>
         /// The number of times that all items in the cache have been retrieved.
         /// </summary>
-        /// <returns></returns>
         public ulong TotalGetCount() => (ulong)_collection.Use((obj) => obj.Sum(o => (decimal)o.Value.GetCount));
 
         /// <summary>
@@ -209,13 +211,8 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns the size of all items stored in the cache.
         /// </summary>
-        /// <returns></returns>
-        public double SizeInMegabytes() => _collection.Use((obj) => obj.Sum(o => o.Value.ApproximateSizeInBytes / 1024.0 / 1024.0));
-        /// <summary>
-        /// Returns the size of all items stored in the cache.
-        /// </summary>
-        /// <returns></returns>
-        public double SizeInKilobytes() => _collection.Use((obj) => obj.Sum(o => o.Value.ApproximateSizeInBytes / 1024.0));
+        public int ApproximateSizeInBytes() => _collection.Use((obj) => obj.Sum(o => o.Value.ApproximateSizeInBytes));
+
 
         #endregion
 
@@ -225,7 +222,6 @@ namespace NTDLS.FastMemoryCache
         /// Returns true if the suppled key is found in the cache.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <returns></returns>
         public bool Contains(string key)
             => _collection.Use((obj) => obj.ContainsKey(key));
 
@@ -233,7 +229,6 @@ namespace NTDLS.FastMemoryCache
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <returns></returns>
         public object Get(string key)
         {
             return _collection.Use((obj) =>
@@ -250,7 +245,6 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <returns></returns>
         public T Get<T>(string key)
         {
             return (T)_collection.Use((obj) =>
@@ -272,20 +266,16 @@ namespace NTDLS.FastMemoryCache
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="cachedObject"></param>
-        /// <returns></returns>
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
             var cachedItem = _collection.Use((obj) =>
             {
-                if (obj.ContainsKey(key))
+                if (obj.TryGetValue(key, out var result))
                 {
-                    var result = obj[key];
                     result.GetCount++;
                     result.LastGetDate = DateTime.UtcNow;
-                    return result;
                 }
-
-                return null;
+                return result;
             });
 
             if (cachedItem != null)
@@ -304,14 +294,12 @@ namespace NTDLS.FastMemoryCache
         /// Attempts to get the cache item with the supplied key value, returns true of found otherwise false.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <returns></returns>
         public object? TryGet(string key)
         {
             return _collection.Use((obj) =>
             {
-                if (obj.ContainsKey(key))
+                if (obj.TryGetValue(key, out var result))
                 {
-                    var result = obj[key];
                     result.GetCount++;
                     result.LastGetDate = DateTime.UtcNow;
                     return result?.Value;
@@ -339,17 +327,23 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            approximateSizeInBytes ??= Estimations.ObjectSize(value);
+            if (_configuration.TrackObjectSize)
+            {
+                approximateSizeInBytes ??= Estimations.ObjectSize(value);
+            }
+            else
+            {
+                approximateSizeInBytes = 0;
+            }
 
             _collection.Use(obj =>
             {
-                if (obj.ContainsKey(key))
+                if (obj.TryGetValue(key, out var result))
                 {
-                    var cacheItem = obj[key];
-                    cacheItem.Value = value;
-                    cacheItem.SetCount++;
-                    cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.ApproximateSizeInBytes = (int)approximateSizeInBytes;
+                    result.Value = value;
+                    result.SetCount++;
+                    result.LastSetDate = DateTime.UtcNow;
+                    result.ApproximateSizeInBytes = (int)approximateSizeInBytes;
                 }
                 else
                 {
@@ -372,17 +366,23 @@ namespace NTDLS.FastMemoryCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            approximateSizeInBytes ??= Estimations.ObjectSize(value);
+            if (_configuration.TrackObjectSize)
+            {
+                approximateSizeInBytes ??= Estimations.ObjectSize(value);
+            }
+            else
+            {
+                approximateSizeInBytes = 0;
+            }
 
             _collection.Use(obj =>
             {
-                if (obj.ContainsKey(key))
+                if (obj.TryGetValue(key, out var result))
                 {
-                    var cacheItem = obj[key];
-                    cacheItem.Value = value;
-                    cacheItem.SetCount++;
-                    cacheItem.LastSetDate = DateTime.UtcNow;
-                    cacheItem.ApproximateSizeInBytes = (int)approximateSizeInBytes;
+                    result.Value = value;
+                    result.SetCount++;
+                    result.LastSetDate = DateTime.UtcNow;
+                    result.ApproximateSizeInBytes = (int)approximateSizeInBytes;
                 }
                 else
                 {

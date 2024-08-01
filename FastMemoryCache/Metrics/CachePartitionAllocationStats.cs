@@ -1,7 +1,7 @@
 ﻿namespace NTDLS.FastMemoryCache.Metrics
 {
     /// <summary>
-    /// Holds configration and performance metrics information about the cache instance.
+    /// Holds configuration and performance metrics information about the cache instance.
     /// </summary>
     public class CachePartitionAllocationStats
     {
@@ -11,12 +11,12 @@
         public PartitionedCacheConfiguration Configuration { get; internal set; }
 
         /// <summary>
-        /// Contains metrics about each cache partiton.
+        /// Contains metrics about each cache partition.
         /// </summary>
         public List<CachePartitionAllocationStat> Partitions { get; private set; } = new();
 
         /// <summary>
-        /// Instanciates a new instance of the allocation details.
+        /// Instantiates a new instance of the allocation details.
         /// </summary>
         /// <param name="configuration"></param>
         public CachePartitionAllocationStats(PartitionedCacheConfiguration configuration)
@@ -45,22 +45,22 @@
             public int Count { get; set; }
 
             /// <summary>
-            /// The number of times that the cache item has been retreived from cache.
+            /// The number of times that the cache item has been retrieved from cache.
             /// </summary>
-            public ulong GetCount { get; set; } = 0;
+            public ulong Reads { get; set; } = 0;
 
             /// <summary>
             /// The number of times that the cache item has been updated in cache.
             /// </summary>
-            public ulong SetCount { get; set; } = 0;
+            public ulong Writes { get; set; } = 0;
 
             /// <summary>
             /// The total size of the items in the cache partition.
             /// </summary>
-            public double SizeInKilobytes { get; set; }
+            public double SizeInBytes { get; set; }
 
             /// <summary>
-            /// Instanciates a new instance of the single cache metrics.
+            /// Instantiates a new instance of the single cache metrics.
             /// </summary>
             /// <param name="configuration"></param>
             public CachePartitionAllocationStat(SingleCacheConfiguration configuration)

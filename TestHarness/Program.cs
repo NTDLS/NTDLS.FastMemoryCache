@@ -8,7 +8,7 @@ namespace TestHarness
         static readonly PartitionedMemoryCache _cache = new(new PartitionedCacheConfiguration()
         {
             IsCaseSensitive = true,
-            MaxMemoryMegabytes = 1024,
+            MaxMemoryBytes = 1024 * 1024 * 10,
             PartitionCount = 16,
             ScavengeIntervalSeconds = 10
         });
@@ -31,9 +31,9 @@ namespace TestHarness
             while (true)
             {
                 int items = _cache.Count();
-                double size = _cache.SizeInMegabytes();
+                double size = _cache.ApproximateSizeInBytes();
 
-                Console.WriteLine($"Items: {items:n0} -> {size:n2}MB");
+                Console.WriteLine($"Items: {items:n0} -> {size:n2}bytes");
                 Thread.Sleep(1000);
             }
         }
@@ -48,7 +48,7 @@ namespace TestHarness
 
                 if (_random.Next(0, 100) >= 75)
                 {
-                    _cache.TryGet<Car>(cacheKey, out var cachedItem);
+                    _cache.TryGet<Car>(cacheKey, out var _);
                 }
 
                 var car = new Car()
@@ -66,14 +66,14 @@ namespace TestHarness
                     }
                 };
 
-                _cache.Upsert(cacheKey, car, TimeSpan.FromMilliseconds(100));
+                _cache.Upsert(cacheKey, car, TimeSpan.FromSeconds(20));
             }
         }
 
         static string RandomString(int length)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            StringBuilder randomString = new StringBuilder();
+            var randomString = new StringBuilder();
 
             var random = new Random();
 

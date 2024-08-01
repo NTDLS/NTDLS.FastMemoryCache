@@ -97,7 +97,6 @@
         /// <summary>
         /// Returns a clone of the cached item.
         /// </summary>
-        /// <returns></returns>
         public SingleMemoryCacheItem Clone()
         {
             return new SingleMemoryCacheItem(Value, ApproximateSizeInBytes, TimeToLiveMilliseconds)
