@@ -42,7 +42,7 @@
             /// <summary>
             /// The count of items in the cache.
             /// </summary>
-            public int Count { get; set; }
+            public long Count { get; set; }
 
             /// <summary>
             /// The number of times that the cache item has been retrieved from cache.

@@ -26,6 +26,11 @@
         public bool IsCaseSensitive { get; set; } = true;
 
         /// <summary>
+        /// Whether or not the cache should track object size for memory limitations and cache ejections.
+        /// </summary>
+        public bool TrackObjectSize { get; set; } = true;
+
+        /// <summary>
         /// Returns a copy of the configuration instance.
         /// </summary>
         public PartitionedCacheConfiguration Clone()

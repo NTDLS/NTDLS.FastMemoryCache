@@ -30,7 +30,7 @@ namespace TestHarness
 
             while (true)
             {
-                int items = _cache.Count();
+                long items = _cache.Count();
                 double size = _cache.ApproximateSizeInBytes();
 
                 Console.WriteLine($"Items: {items:n0} -> {size:n2}bytes");

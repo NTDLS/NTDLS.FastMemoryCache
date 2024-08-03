@@ -13,7 +13,8 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         public const int MinimumMemorySizePerPartition = 1024 * 512;
 
-        private readonly PessimisticCriticalResource<Dictionary<string, SingleMemoryCacheItem>> _collection;
+
+        private readonly PessimisticCriticalResource<CacheContainer> _container = new();
         private readonly Timer? _timer;
         private readonly SingleCacheConfiguration _configuration;
         private bool _currentlyCleaning = false;
@@ -45,7 +46,7 @@ namespace NTDLS.FastMemoryCache
             {
                 if (disposing)
                 {
-                    _collection.Use((obj) => obj.Clear());
+                    _container.Use((obj) => obj.Clear());
                     _timer?.Dispose();
                 }
                 _disposed = true;
@@ -57,15 +58,15 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns a copy of all of the lookup keys defined in the cache.
         /// </summary>
-        public List<string> CloneCacheKeys() => _collection.Use((obj) => obj.Select(o => o.Key).ToList());
+        public List<string> CloneCacheKeys() => _container.Use((obj) => obj.MemMache.Select(o => o.Key).ToList());
 
         /// <summary>
         /// Returns copies of all items contained in the cache.
         /// </summary>
         public Dictionary<string, SingleMemoryCacheItem> CloneCacheItems() =>
-            _collection.Use((obj) => obj.ToDictionary(
+            _container.Use((obj) => obj.MemMache.ToDictionary(
                 kvp => kvp.Key,
-                kvp => kvp.Value.Clone(),
+                kvp => ((SingleMemoryCacheItem)kvp.Value).Clone(),
                 (_configuration.IsCaseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
             ));
 
@@ -84,14 +85,7 @@ namespace NTDLS.FastMemoryCache
                 _configuration.MaxMemoryBytes = minMemoryPerPartition;
             }
 
-            if (_configuration.IsCaseSensitive)
-            {
-                _collection = new(new Dictionary<string, SingleMemoryCacheItem>(StringComparer.Ordinal));
-            }
-            else
-            {
-                _collection = new(new Dictionary<string, SingleMemoryCacheItem>(StringComparer.OrdinalIgnoreCase));
-            }
+            _container.Use((obj) => obj.Initialize(_configuration));
 
             if (_configuration.ScavengeIntervalSeconds > 0)
             {
@@ -114,14 +108,7 @@ namespace NTDLS.FastMemoryCache
                 _configuration.MaxMemoryBytes = minMemoryPerPartition;
             }
 
-            if (_configuration.IsCaseSensitive)
-            {
-                _collection = new(new Dictionary<string, SingleMemoryCacheItem>(StringComparer.Ordinal));
-            }
-            else
-            {
-                _collection = new(new Dictionary<string, SingleMemoryCacheItem>(StringComparer.OrdinalIgnoreCase));
-            }
+            _container.Use((obj) => obj.Initialize(_configuration));
 
             if (_configuration.ScavengeIntervalSeconds > 0)
             {
@@ -158,13 +145,19 @@ namespace NTDLS.FastMemoryCache
 
                 var totalSizeInBytes = ApproximateSizeInBytes();
 
-                _collection.TryUse(50, (obj) =>
+                _container.TryUse(50, (obj) =>
                 {
                     //When we reach our set memory pressure, we will remove the least recently hit items from cache.
                     //TODO: since we have the hit count, update count, etc. maybe we can make this more intelligent?
 
-                    var expiredItems = obj.Where(o => o.Value.IsExpired)
-                                        .Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes, true));
+                    var expiredItems = obj.MemMache
+                            .Select(o => new { Key = o.Key, Value = (SingleMemoryCacheItem)o.Value })
+                            .Where(o => o.Value.IsExpired)
+                            .Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes, true));
+
+                    if (expiredItems.Any())
+                    {
+                    }
 
                     //Remove expired objects:
                     foreach (var item in expiredItems)
@@ -181,7 +174,11 @@ namespace NTDLS.FastMemoryCache
                         //If we are still over memory limit, remove items until we are under the memory limit:
                         if (totalSizeInBytes > _configuration.MaxMemoryBytes)
                         {
-                            foreach (var item in obj.OrderBy(o => o.Value.LastGetDate).Select(o => new ItemToRemove(o.Key, o.Value.ApproximateSizeInBytes)))
+                            var itemsToRemove = obj.MemMache
+                                    .OrderBy(o => ((SingleMemoryCacheItem)o.Value).LastRead)
+                                    .Select(o => new ItemToRemove(o.Key, ((SingleMemoryCacheItem)o.Value).ApproximateSizeInBytes));
+
+                            foreach (var item in itemsToRemove)
                             {
                                 Remove(item.Key);
                                 objectSizeSummation += item.ApproximateSizeInBytes;
@@ -213,22 +210,25 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns the count of items stored in the cache.
         /// </summary>
-        public int Count() => _collection.Use((obj) => obj.Count);
+        public long Count() => _container.Use((obj) => obj.MemMache.GetCount());
 
         /// <summary>
         /// The number of times that all items in the cache have been retrieved.
         /// </summary>
-        public ulong TotalGetCount() => (ulong)_collection.Use((obj) => obj.Sum(o => (decimal)o.Value.GetCount));
+        public ulong TotalGetCount() => (ulong)_container.Use((obj)
+            => obj.MemMache.Sum(o => (decimal)((SingleMemoryCacheItem)o.Value).Reads));
 
         /// <summary>
         /// The number of times that all items have been updated in cache.
         /// </summary>
-        public ulong TotalSetCount() => (ulong)_collection.Use((obj) => obj.Sum(o => (decimal)o.Value.SetCount));
+        public ulong TotalSetCount() => (ulong)_container.Use((obj)
+            => obj.MemMache.Sum(o => (decimal)((SingleMemoryCacheItem)o.Value).Writes));
 
         /// <summary>
         /// Returns the size of all items stored in the cache.
         /// </summary>
-        public int ApproximateSizeInBytes() => _collection.Use((obj) => obj.Sum(o => o.Value.ApproximateSizeInBytes));
+        public int ApproximateSizeInBytes() => _container.Use((obj)
+            => obj.MemMache.Sum(o => ((SingleMemoryCacheItem)o.Value).ApproximateSizeInBytes));
 
 
         #endregion
@@ -240,7 +240,7 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         public bool Contains(string key)
-            => _collection.Use((obj) => obj.ContainsKey(key));
+            => _container.Use((obj) => obj.MemMache.Contains(key));
 
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
@@ -248,11 +248,11 @@ namespace NTDLS.FastMemoryCache
         /// <param name="key">The unique cache key used to identify the item.</param>
         public object Get(string key)
         {
-            return _collection.Use((obj) =>
+            return _container.Use((obj) =>
             {
-                var result = obj[key];
-                result.GetCount++;
-                result.LastGetDate = DateTime.UtcNow;
+                var result = (SingleMemoryCacheItem)obj.MemMache[key];
+                result.Reads++;
+                result.LastRead = DateTime.UtcNow;
                 return result.Value;
             });
         }
@@ -264,11 +264,11 @@ namespace NTDLS.FastMemoryCache
         /// <param name="key">The unique cache key used to identify the item.</param>
         public T Get<T>(string key)
         {
-            return (T)_collection.Use((obj) =>
+            return (T)_container.Use((obj) =>
             {
-                var result = obj[key];
-                result.GetCount++;
-                result.LastGetDate = DateTime.UtcNow;
+                var result = (SingleMemoryCacheItem)obj.MemMache[key];
+                result.Reads++;
+                result.LastRead = DateTime.UtcNow;
                 return result.Value;
             });
         }
@@ -285,12 +285,13 @@ namespace NTDLS.FastMemoryCache
         /// <param name="cachedObject"></param>
         public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
         {
-            var cachedItem = _collection.Use((obj) =>
+            var cachedItem = _container.Use((obj) =>
             {
-                if (obj.TryGetValue(key, out var result))
+                var result = obj.Get(key);
+                if (result != null)
                 {
-                    result.GetCount++;
-                    result.LastGetDate = DateTime.UtcNow;
+                    result.Reads++;
+                    result.LastRead = DateTime.UtcNow;
                 }
                 return result;
             });
@@ -313,12 +314,13 @@ namespace NTDLS.FastMemoryCache
         /// <param name="key">The unique cache key used to identify the item.</param>
         public object? TryGet(string key)
         {
-            return _collection.Use((obj) =>
+            return _container.Use((obj) =>
             {
-                if (obj.TryGetValue(key, out var result))
+                var result = obj.Get(key);
+                if (result != null)
                 {
-                    result.GetCount++;
-                    result.LastGetDate = DateTime.UtcNow;
+                    result.Reads++;
+                    result.LastRead = DateTime.UtcNow;
                     return result?.Value;
                 }
                 return null;
@@ -353,19 +355,9 @@ namespace NTDLS.FastMemoryCache
                 approximateSizeInBytes = 0;
             }
 
-            _collection.Use(obj =>
+            _container.Use(obj =>
             {
-                if (obj.TryGetValue(key, out var result))
-                {
-                    result.Value = value;
-                    result.SetCount++;
-                    result.LastSetDate = DateTime.UtcNow;
-                    result.ApproximateSizeInBytes = (int)approximateSizeInBytes;
-                }
-                else
-                {
-                    obj.Add(key, new SingleMemoryCacheItem(value, (int)approximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
-                }
+                obj.Upsert(key, value, approximateSizeInBytes, timeToLive);
             });
         }
 
@@ -392,19 +384,9 @@ namespace NTDLS.FastMemoryCache
                 approximateSizeInBytes = 0;
             }
 
-            _collection.Use(obj =>
+            _container.Use(obj =>
             {
-                if (obj.TryGetValue(key, out var result))
-                {
-                    result.Value = value;
-                    result.SetCount++;
-                    result.LastSetDate = DateTime.UtcNow;
-                    result.ApproximateSizeInBytes = (int)approximateSizeInBytes;
-                }
-                else
-                {
-                    obj.Add(key, new SingleMemoryCacheItem(value, (int)approximateSizeInBytes, (int)(timeToLive?.TotalMilliseconds ?? 0)));
-                }
+                obj.Upsert(key, value, approximateSizeInBytes, timeToLive);
             });
         }
 
@@ -465,7 +447,8 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <returns>True of the item was removed from cache.</returns>
-        public bool Remove(string key) => _collection.Use((obj) => obj.Remove(key));
+        public bool Remove(string key)
+            => _container.Use((obj) => obj.Remove(key));
 
         /// <summary>
         /// Removes all items from the cache that start with the given string, returns the count of items found and removed.
@@ -478,7 +461,7 @@ namespace NTDLS.FastMemoryCache
 
             var comparison = _configuration.IsCaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
-            _collection.Use(obj =>
+            _container.Use(obj =>
             {
                 var keysToRemove = CloneCacheKeys().Where(entry => entry.StartsWith(prefix, comparison)).ToList();
 
@@ -497,7 +480,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Removes all items from the cache.
         /// </summary>
-        public void Clear() => _collection.Use((obj) => obj.Clear());
+        public void Clear() => _container.Use((obj) => obj.Clear());
 
         #endregion
     }

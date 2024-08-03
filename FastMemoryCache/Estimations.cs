@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
+using System.Runtime.Caching;
 using System.Runtime.InteropServices;
-
 
 namespace NTDLS.FastMemoryCache
 {
@@ -9,11 +9,12 @@ namespace NTDLS.FastMemoryCache
     /// </summary>
     static public class Estimations
     {
-        private static readonly SingleMemoryCache _reflectionCache = new(
-            new SingleCacheConfiguration()
-            {
-                TrackObjectSize = false
-            });
+        private static readonly MemoryCache _reflectionCache = new("Estimations:_reflectionCache");
+
+        private static readonly CacheItemPolicy _infinitePolicy = new()
+        {
+            SlidingExpiration = TimeSpan.FromSeconds(60)
+        };
 
         /// <summary>
         /// Estimates the amount of memory that would be consumed by a class instance.
@@ -29,10 +30,11 @@ namespace NTDLS.FastMemoryCache
 
             var type = obj.GetType();
 
-            if (_reflectionCache.TryGet(type.Name, out FieldInfo[]? fieldsAndProperties) == false)
+            var fieldsAndProperties = (FieldInfo[])_reflectionCache.Get(type.Name);
+            if (fieldsAndProperties == null)
             {
                 fieldsAndProperties = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                _reflectionCache.Upsert(type.Name, fieldsAndProperties, TimeSpan.FromSeconds(60));
+                _reflectionCache.Add(type.Name, fieldsAndProperties, _infinitePolicy);
             }
 
             foreach (var field in fieldsAndProperties)

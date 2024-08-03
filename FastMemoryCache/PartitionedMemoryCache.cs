@@ -46,7 +46,8 @@ namespace NTDLS.FastMemoryCache
             {
                 MaxMemoryBytes = _configuration.MaxMemoryBytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
                 ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
-                IsCaseSensitive = _configuration.IsCaseSensitive
+                IsCaseSensitive = _configuration.IsCaseSensitive,
+                TrackObjectSize = _configuration.TrackObjectSize
             };
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
@@ -76,7 +77,8 @@ namespace NTDLS.FastMemoryCache
             {
                 MaxMemoryBytes = _configuration.MaxMemoryBytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
                 ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
-                IsCaseSensitive = _configuration.IsCaseSensitive
+                IsCaseSensitive = _configuration.IsCaseSensitive,
+                TrackObjectSize = _configuration.TrackObjectSize
             };
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
@@ -126,9 +128,9 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns the count of items across all cache partitions.
         /// </summary>
-        public int Count()
+        public long Count()
         {
-            int totalValue = 0;
+            long totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {
@@ -237,11 +239,11 @@ namespace NTDLS.FastMemoryCache
                         {
                             Partition = partitionIndex,
                             ApproximateSizeInBytes = item.Value.ApproximateSizeInBytes,
-                            Reads = item.Value.GetCount,
-                            Writes = item.Value.SetCount,
+                            Reads = item.Value.Reads,
+                            Writes = item.Value.Writes,
                             Created = item.Value.Created,
-                            LastWrite = item.Value.LastSetDate,
-                            LastRead = item.Value.LastGetDate,
+                            LastWrite = item.Value.LastWrite,
+                            LastRead = item.Value.LastRead,
                         });
                     }
                 }
