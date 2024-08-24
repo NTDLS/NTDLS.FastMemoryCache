@@ -89,6 +89,9 @@
                 Created = Created,
                 LastWrite = LastWrite,
                 LastRead = LastRead,
+                ApproximateSizeInBytes = ApproximateSizeInBytes,
+                TimeToLiveMilliseconds = TimeToLiveMilliseconds,
+                Value = Value,
             };
         }
 
