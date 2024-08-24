@@ -168,8 +168,8 @@ namespace NTDLS.FastMemoryCache
 
                     if (_configuration.TrackObjectSize)
                     {
-                        double spaceNeededToClear = (totalSizeInBytes - _configuration.MaxMemoryBytes);
-                        double objectSizeSummation = 0;
+                        long spaceNeededToClear = (totalSizeInBytes - _configuration.MaxMemoryBytes);
+                        long objectSizeSummation = 0;
 
                         //If we are still over memory limit, remove items until we are under the memory limit:
                         if (totalSizeInBytes > _configuration.MaxMemoryBytes)
@@ -227,9 +227,15 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns the size of all items stored in the cache.
         /// </summary>
-        public int ApproximateSizeInBytes() => _container.Use((obj)
-            => obj.MemMache.Sum(o => ((SingleMemoryCacheItem)o.Value).ApproximateSizeInBytes));
-
+        public long ApproximateSizeInBytes() => _container.Use((obj) =>
+        {
+            long approximateSizeInBytes = 0;
+            foreach (var item in obj.MemMache)
+            {
+                approximateSizeInBytes += ((SingleMemoryCacheItem)item.Value).ApproximateSizeInBytes;
+            }
+            return approximateSizeInBytes;
+        });
 
         #endregion
 

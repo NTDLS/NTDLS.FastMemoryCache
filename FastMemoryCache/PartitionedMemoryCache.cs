@@ -34,7 +34,7 @@ namespace NTDLS.FastMemoryCache
             _configuration = new PartitionedCacheConfiguration();
             _partitions = new SingleMemoryCache[_configuration.PartitionCount];
 
-            int maxMemoryPerPartition = (int)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
+            long maxMemoryPerPartition = (long)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
 
             int minMemoryPerPartition = SingleMemoryCache.MinimumMemorySizePerPartition;
             if (maxMemoryPerPartition < minMemoryPerPartition)
@@ -65,7 +65,7 @@ namespace NTDLS.FastMemoryCache
             _configuration = configuration.Clone();
             _partitions = new SingleMemoryCache[_configuration.PartitionCount];
 
-            int maxMemoryPerPartition = (int)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
+            long maxMemoryPerPartition = (long)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
 
             int minMemoryPerPartition = SingleMemoryCache.MinimumMemorySizePerPartition;
             if (maxMemoryPerPartition < minMemoryPerPartition)
@@ -182,9 +182,9 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Returns the total size of all cache items across all cache partitions.
         /// </summary>
-        public double ApproximateSizeInBytes()
+        public long ApproximateSizeInBytes()
         {
-            double totalValue = 0;
+            long totalValue = 0;
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
             {

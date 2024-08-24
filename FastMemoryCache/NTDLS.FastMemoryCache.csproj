@@ -12,13 +12,13 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
     <PackageTags>memory-cache;partitioned-cache;managed-cache;fast-cache;cache;memory</PackageTags>
     <PackageReleaseNotes>
-      Swapped dictionary for MemoryCache
+      Changed max memory type to long.
     </PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>NetworkDLS</Authors>
     <Company>NetworkDLS</Company>
-    <Version>1.7.1</Version>
+    <Version>1.7.2</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>

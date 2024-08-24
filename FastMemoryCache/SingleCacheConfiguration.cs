@@ -13,7 +13,7 @@
         /// <summary>
         /// The number of seconds between attempts to sure-up the set memory limits. 0 = no limit.
         /// </summary>
-        public int MaxMemoryBytes { get; set; } = 4194304;
+        public long MaxMemoryBytes { get; set; } = 1024 * 1024 * 32;
 
         /// <summary>
         /// Whether the cache keys are treated as case sensitive or not.
