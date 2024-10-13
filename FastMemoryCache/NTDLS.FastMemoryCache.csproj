@@ -12,13 +12,13 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
     <PackageTags>memory-cache;partitioned-cache;managed-cache;fast-cache;cache;memory</PackageTags>
     <PackageReleaseNotes>
-      Dependency updates.
+      Nullability disambiguation.
     </PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>NetworkDLS</Authors>
     <Company>NetworkDLS</Company>
-    <Version>1.7.6</Version>
+    <Version>1.7.7</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>
@@ -43,7 +43,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="NTDLS.Semaphore" Version="3.4.3" />
+    <PackageReference Include="NTDLS.Semaphore" Version="3.4.4" />
     <PackageReference Include="System.Runtime.Caching" Version="8.0.1" />
   </ItemGroup>
 </Project>
