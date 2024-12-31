@@ -1,12 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>NTDLS.FastMemoryCache</Title>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
-    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
+    <Copyright>Copyright © 2025 NetworkDLS</Copyright>
     <Description>Provides fast and easy to use thread-safe partitioned memory cache for .net that helps manage the maximum size and track performance.</Description>
     <PackageProjectUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</PackageProjectUrl>
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
@@ -18,7 +18,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>NetworkDLS</Authors>
     <Company>NetworkDLS</Company>
-    <Version>1.7.10</Version>
+    <Version>1.7.11</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>
@@ -43,7 +43,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="NTDLS.Semaphore" Version="3.4.9" />
+    <PackageReference Include="NTDLS.Semaphore" Version="3.4.10" />
     <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
   </ItemGroup>
 </Project>
