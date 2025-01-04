@@ -16,9 +16,9 @@
         public int ApproximateSizeInBytes { get; set; }
 
         /// <summary>
-        /// The number of milliseconds from insertion, update or last read that the item should live in cache. 0 = infinite.
+        /// The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.
         /// </summary>
-        public int TimeToLiveMilliseconds { get; set; } = 0;
+        public TimeSpan TimeToLive { get; set; } = TimeSpan.Zero;
 
         /// <summary>
         /// The number of times that the cache item has been retrieved from cache.
@@ -49,24 +49,24 @@
         /// Creates an instance of the cache item using a reference to the to-be-cached object.
         /// </summary>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="timeToLiveMilliseconds">The number of milliseconds to keep the item in the cache.</param>
-        public SingleMemoryCacheItem(object value, int timeToLiveMilliseconds)
+        /// <param name="timeToLive">The amount of time to keep the item in the cache.</param>
+        public SingleMemoryCacheItem(object value, TimeSpan timeToLive)
         {
             Value = value;
             Created = DateTime.UtcNow;
             LastWrite = Created;
             LastRead = Created;
             Writes = 1;
-            TimeToLiveMilliseconds = timeToLiveMilliseconds;
+            TimeToLive = timeToLive;
         }
 
         /// <summary>
         /// Creates an instance of the cache item using a reference to the to-be-cached object.
         /// </summary>
         /// <param name="value">The value to store in the cache.</param>
-        /// <param name="timeToLiveMilliseconds">The number of milliseconds to keep the item in the cache.</param>
+        /// <param name="timeToLive">The amount of time to keep the item in the cache.</param>
         /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
-        public SingleMemoryCacheItem(object value, int timeToLiveMilliseconds, int approximateSizeInBytes)
+        public SingleMemoryCacheItem(object value, TimeSpan timeToLive, int approximateSizeInBytes)
         {
             Value = value;
             Created = DateTime.UtcNow;
@@ -74,7 +74,7 @@
             LastRead = Created;
             Writes = 1;
             ApproximateSizeInBytes = approximateSizeInBytes;
-            TimeToLiveMilliseconds = timeToLiveMilliseconds;
+            TimeToLive = timeToLive;
         }
 
         /// <summary>
@@ -82,7 +82,7 @@
         /// </summary>
         public SingleMemoryCacheItem Clone()
         {
-            return new SingleMemoryCacheItem(Value, ApproximateSizeInBytes)
+            return new SingleMemoryCacheItem(Value, TimeToLive, ApproximateSizeInBytes)
             {
                 Reads = Reads,
                 Writes = Writes,
@@ -90,7 +90,6 @@
                 LastWrite = LastWrite,
                 LastRead = LastRead,
                 ApproximateSizeInBytes = ApproximateSizeInBytes,
-                TimeToLiveMilliseconds = TimeToLiveMilliseconds,
                 Value = Value,
             };
         }
@@ -102,17 +101,16 @@
         {
             get
             {
-                if (TimeToLiveMilliseconds > 0)
+                if (TimeToLive > TimeSpan.Zero)
                 {
                     var greatestDate = LastWrite > LastRead ? LastWrite : LastRead;
                     if (greatestDate != null)
                     {
-                        return (DateTime.UtcNow - ((DateTime)greatestDate)).TotalMilliseconds > TimeToLiveMilliseconds;
+                        return (DateTime.UtcNow - greatestDate.Value) > TimeToLive;
                     }
                 }
                 return false;
             }
         }
-
     }
 }

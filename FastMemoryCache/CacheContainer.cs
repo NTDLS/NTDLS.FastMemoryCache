@@ -4,19 +4,18 @@ namespace NTDLS.FastMemoryCache
 {
     internal class CacheContainer
     {
-        private readonly CacheItemPolicy _infinitePolicy = new CacheItemPolicy
+        private readonly CacheItemPolicy _infinitePolicy = new()
         {
             AbsoluteExpiration = ObjectCache.InfiniteAbsoluteExpiration
         };
 
         private SingleCacheConfiguration _configuration = new();
 
-        public MemoryCache MemMache { get; set; } = new("<SingleMemoryCache:Uninitialized>");
+        public MemoryCache MemMache { get; set; } = new("<SingleMemoryCache>");
 
-        public void Initialize(SingleCacheConfiguration configuration)
+        public void Configure(SingleCacheConfiguration configuration)
         {
             _configuration = configuration;
-            MemMache = new("<SingleMemoryCache:Initialized>");
         }
 
         public SingleMemoryCacheItem? Get(string key)
@@ -64,9 +63,7 @@ namespace NTDLS.FastMemoryCache
             }
             else
             {
-                MemMache.Add(key, new SingleMemoryCacheItem(value,
-                    (int)(timeToLive?.TotalMilliseconds ?? 0),
-                    (approximateSizeInBytes ?? 0)), _infinitePolicy);
+                MemMache.Add(key, new SingleMemoryCacheItem(value, timeToLive ?? TimeSpan.Zero, (approximateSizeInBytes ?? 0)), _infinitePolicy);
             }
         }
     }

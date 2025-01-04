@@ -18,7 +18,6 @@
         /// <summary>
         /// Instantiates a new instance of the allocation details.
         /// </summary>
-        /// <param name="configuration"></param>
         public CachePartitionAllocationStats(PartitionedCacheConfiguration configuration)
         {
             Configuration = configuration.Clone();
@@ -62,7 +61,6 @@
             /// <summary>
             /// Instantiates a new instance of the single cache metrics.
             /// </summary>
-            /// <param name="configuration"></param>
             public CachePartitionAllocationStat(SingleCacheConfiguration configuration)
             {
                 Configuration = configuration.Clone();

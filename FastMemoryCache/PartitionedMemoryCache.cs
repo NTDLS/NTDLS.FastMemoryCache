@@ -360,54 +360,12 @@ namespace NTDLS.FastMemoryCache
         }
 
         /// <summary>
-        /// Inserts an item into the memory cache. If it already exists, then it will be updated.
-        /// </summary>
-        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
-        /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <param name="value">The value to store in the cache.</param>
-        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
-        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert<T>(string key, T value, int? approximateSizeInBytes, TimeSpan? timeToLive)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                _partitions[partitionIndex].Upsert<T>(key, value, approximateSizeInBytes, timeToLive);
-            }
-        }
-
-        /// <summary>
         /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
-        public void Upsert<T>(string key, T value) => Upsert<T>(key, value, null, null);
-
-        /// <summary>
-        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
-        /// </summary>
-        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
-        /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <param name="value">The value to store in the cache.</param>
-        /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
-        public void Upsert<T>(string key, T value, int? approximateSizeInBytes) => Upsert<T>(key, value, approximateSizeInBytes, null);
-
-        /// <summary>
-        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
-        /// </summary>
-        /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
-        /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <param name="value">The value to store in the cache.</param>
-        /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert<T>(string key, T value, TimeSpan? timeToLive) => Upsert<T>(key, value, null, timeToLive);
-
-        /// <summary>
-        /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
-        /// </summary>
-        /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <param name="value">The value to store in the cache.</param>
-        public void Upsert(string key, object value) => Upsert(key, value, null, null);
+        public void Upsert(string key, object value)
+            => Upsert(key, value, null, null);
 
         /// <summary>
         /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
@@ -415,7 +373,8 @@ namespace NTDLS.FastMemoryCache
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
         /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
-        public void Upsert(string key, object value, int? approximateSizeInBytes) => Upsert(key, value, approximateSizeInBytes, null);
+        public void Upsert(string key, object value, int? approximateSizeInBytes)
+            => Upsert(key, value, approximateSizeInBytes, null);
 
         /// <summary>
         /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
@@ -423,7 +382,8 @@ namespace NTDLS.FastMemoryCache
         /// <param name="key">The unique cache key used to identify the item.</param>
         /// <param name="value">The value to store in the cache.</param>
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
-        public void Upsert(string key, object value, TimeSpan? timeToLive) => Upsert(key, value, null, timeToLive);
+        public void Upsert(string key, object value, TimeSpan? timeToLive)
+            => Upsert(key, value, null, timeToLive);
 
         #endregion
 

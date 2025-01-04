@@ -18,7 +18,6 @@
         /// <summary>
         /// Instantiates a new instance of the allocation details.
         /// </summary>
-        /// <param name="configuration"></param>
         public CachePartitionAllocationDetails(PartitionedCacheConfiguration configuration)
         {
             Configuration = configuration.Clone();

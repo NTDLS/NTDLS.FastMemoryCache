@@ -11,7 +11,7 @@ namespace NTDLS.FastMemoryCache
     {
         private static readonly MemoryCache _reflectionCache = new("Estimations:_reflectionCache");
 
-        private static readonly CacheItemPolicy _infinitePolicy = new()
+        private static readonly CacheItemPolicy _sliding60SecondPolicy = new()
         {
             SlidingExpiration = TimeSpan.FromSeconds(60)
         };
@@ -34,7 +34,7 @@ namespace NTDLS.FastMemoryCache
             if (fieldsAndProperties == null)
             {
                 fieldsAndProperties = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                _reflectionCache.Add(type.Name, fieldsAndProperties, _infinitePolicy);
+                _reflectionCache.Add(type.Name, fieldsAndProperties, _sliding60SecondPolicy);
             }
 
             foreach (var field in fieldsAndProperties)
