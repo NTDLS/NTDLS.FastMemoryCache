@@ -44,7 +44,6 @@
   
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-    <PackageReference Include="NTDLS.Semaphore" Version="3.5.1" />
     <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
   </ItemGroup>
 </Project>
