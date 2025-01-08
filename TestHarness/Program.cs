@@ -8,9 +8,9 @@ namespace TestHarness
         static readonly PartitionedMemoryCache _cache = new(new PartitionedCacheConfiguration()
         {
             IsCaseSensitive = true,
-            MaxMemoryBytes = 1024 * 1024 * 10,
+            SizeLimitBytes = 1024 * 1024 * 10,
             PartitionCount = 16,
-            ScavengeIntervalSeconds = 10
+            EstimateObjectSize = true,
         });
         static readonly Random _random = new();
 
@@ -31,9 +31,9 @@ namespace TestHarness
             while (true)
             {
                 long items = _cache.Count();
-                double size = _cache.ApproximateSizeInBytes();
+                double size = _cache.CurrentEstimatedSize();
 
-                Console.WriteLine($"Items: {items:n0} -> {size:n2}bytes");
+                Console.WriteLine($"Size: {size:n0}b, Items: {items:n0}");
                 Thread.Sleep(1000);
             }
         }

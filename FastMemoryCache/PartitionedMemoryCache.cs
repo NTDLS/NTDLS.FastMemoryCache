@@ -1,5 +1,4 @@
 ﻿using NTDLS.FastMemoryCache.Metrics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.FastMemoryCache
 {
@@ -21,7 +20,7 @@ namespace NTDLS.FastMemoryCache
         /// <summary>
         /// Computes the partition for a given key. This must be case insensitive.
         /// </summary>
-        private int GetKeyPartition(string key)
+        private int ComputePartition(string key)
             => Math.Abs(key.ToLowerInvariant().GetHashCode() % _configuration.PartitionCount);
 
         #region Ctor.
@@ -34,20 +33,20 @@ namespace NTDLS.FastMemoryCache
             _configuration = new PartitionedCacheConfiguration();
             _partitions = new SingleMemoryCache[_configuration.PartitionCount];
 
-            long maxMemoryPerPartition = (long)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
-
-            int minMemoryPerPartition = SingleMemoryCache.MinimumMemorySizePerPartition;
-            if (maxMemoryPerPartition < minMemoryPerPartition)
+            var sizeLimitBytesPerPartition = (long)(_configuration.SizeLimitBytes / (double)_configuration.PartitionCount);
+            if (sizeLimitBytesPerPartition < Defaults.MinimumMemoryBytesPerPartition)
             {
-                maxMemoryPerPartition = minMemoryPerPartition;
+                sizeLimitBytesPerPartition = Defaults.MinimumMemoryBytesPerPartition;
             }
 
             var singleConfiguration = new SingleCacheConfiguration
             {
-                MaxMemoryBytes = _configuration.MaxMemoryBytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
-                ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
+                CompactionPercentage = _configuration.CompactionPercentage,
+                EstimateObjectSize = _configuration.EstimateObjectSize,
+                ExpirationScanFrequency = _configuration.ExpirationScanFrequency,
                 IsCaseSensitive = _configuration.IsCaseSensitive,
-                TrackObjectSize = _configuration.TrackObjectSize
+                SizeLimitBytes = _configuration.SizeLimitBytes == 0 ? 0 : sizeLimitBytesPerPartition,
+                TrackLinkedCacheEntries = _configuration.TrackLinkedCacheEntries
             };
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
@@ -65,20 +64,20 @@ namespace NTDLS.FastMemoryCache
             _configuration = configuration.Clone();
             _partitions = new SingleMemoryCache[_configuration.PartitionCount];
 
-            long maxMemoryPerPartition = (long)(_configuration.MaxMemoryBytes / (double)_configuration.PartitionCount);
-
-            int minMemoryPerPartition = SingleMemoryCache.MinimumMemorySizePerPartition;
-            if (maxMemoryPerPartition < minMemoryPerPartition)
+            var sizeLimitBytesPerPartition = (long)(_configuration.SizeLimitBytes / (double)_configuration.PartitionCount);
+            if (sizeLimitBytesPerPartition < Defaults.MinimumMemoryBytesPerPartition)
             {
-                maxMemoryPerPartition = minMemoryPerPartition;
+                sizeLimitBytesPerPartition = Defaults.MinimumMemoryBytesPerPartition;
             }
 
             var singleConfiguration = new SingleCacheConfiguration
             {
-                MaxMemoryBytes = _configuration.MaxMemoryBytes == 0 ? 0 : maxMemoryPerPartition < 1 ? 1 : maxMemoryPerPartition,
-                ScavengeIntervalSeconds = _configuration.ScavengeIntervalSeconds,
+                CompactionPercentage = _configuration.CompactionPercentage,
+                EstimateObjectSize = _configuration.EstimateObjectSize,
+                ExpirationScanFrequency = _configuration.ExpirationScanFrequency,
                 IsCaseSensitive = _configuration.IsCaseSensitive,
-                TrackObjectSize = _configuration.TrackObjectSize
+                SizeLimitBytes = _configuration.SizeLimitBytes == 0 ? 0 : sizeLimitBytesPerPartition,
+                TrackLinkedCacheEntries = _configuration.TrackLinkedCacheEntries
             };
 
             for (int i = 0; i < _configuration.PartitionCount; i++)
@@ -126,127 +125,48 @@ namespace NTDLS.FastMemoryCache
         #region Metrics.
 
         /// <summary>
-        /// Returns the count of items across all cache partitions.
+        /// Returns the count of items stored across all cache partitions.
         /// </summary>
         public long Count()
-        {
-            long totalValue = 0;
-
-            for (int i = 0; i < _configuration.PartitionCount; i++)
-            {
-                lock (_partitions[i])
-                {
-                    totalValue += _partitions[i].Count();
-                }
-            }
-
-            return totalValue;
-        }
+            => _partitions.Sum(o => o.Count());
 
         /// <summary>
-        /// The number of times that all items in the cache have been retrieved.
+        /// Gets the total number of cache hits across all cache partitions.
         /// </summary>
-        public ulong TotalGetCount()
-        {
-            ulong totalValue = 0;
-
-            for (int i = 0; i < _configuration.PartitionCount; i++)
-            {
-                lock (_partitions[i])
-                {
-                    totalValue += _partitions[i].TotalGetCount();
-                }
-            }
-
-            return totalValue;
-        }
+        public long TotalHits()
+            => _partitions.Sum(o => o.TotalHits());
 
         /// <summary>
-        /// The number of times that all items have been updated in cache.
+        /// Gets the total number of cache misses across all cache partitions.
         /// </summary>
-        public ulong TotalSetCount()
-        {
-            ulong totalValue = 0;
-
-            for (int i = 0; i < _configuration.PartitionCount; i++)
-            {
-                lock (_partitions[i])
-                {
-                    totalValue += _partitions[i].TotalSetCount();
-                }
-            }
-
-            return totalValue;
-        }
+        public long TotalMisses()
+            => _partitions.Sum(o => o.TotalMisses());
 
         /// <summary>
         /// Returns the total size of all cache items across all cache partitions.
         /// </summary>
-        public long ApproximateSizeInBytes()
-        {
-            long totalValue = 0;
-
-            for (int i = 0; i < _configuration.PartitionCount; i++)
-            {
-                lock (_partitions[i])
-                {
-                    totalValue += _partitions[i].ApproximateSizeInBytes();
-                }
-            }
-
-            return totalValue;
-        }
+        public long CurrentEstimatedSize()
+            => _partitions.Sum(o => o.CurrentEstimatedSize());
 
         /// <summary>
         /// Returns high level statistics about the cache partitions.
         /// </summary>
-        public CachePartitionAllocationStats GetPartitionAllocationStatistics()
+        public CachePartitionAllocationStatistics GetPartitionAllocationStatistics()
         {
-            var result = new CachePartitionAllocationStats(_configuration);
+            var result = new CachePartitionAllocationStatistics(_configuration);
 
-            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
+            int partitionIndex = 0;
+
+            foreach (var partition in _partitions)
             {
-                lock (_partitions[partitionIndex])
+                result.Partitions.Add(new CachePartitionAllocationStatistic(partition.Configuration)
                 {
-                    result.Partitions.Add(new CachePartitionAllocationStats.CachePartitionAllocationStat(_partitions[partitionIndex].Configuration)
-                    {
-                        Partition = partitionIndex,
-                        Count = _partitions[partitionIndex].Count(),
-                        SizeInBytes = _partitions[partitionIndex].ApproximateSizeInBytes(),
-                        Reads = _partitions[partitionIndex].TotalGetCount(),
-                        Writes = _partitions[partitionIndex].TotalSetCount(),
-                    });
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Returns detailed level statistics about the cache partitions.
-        /// </summary>
-        public CachePartitionAllocationDetails GetPartitionAllocationDetails()
-        {
-            var result = new CachePartitionAllocationDetails(_configuration);
-
-            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
-            {
-                lock (_partitions[partitionIndex])
-                {
-                    foreach (var item in _partitions[partitionIndex].CloneCacheItems())
-                    {
-                        result.Items.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetailItem(item.Key)
-                        {
-                            Partition = partitionIndex,
-                            ApproximateSizeInBytes = item.Value.ApproximateSizeInBytes,
-                            Reads = item.Value.Reads,
-                            Writes = item.Value.Writes,
-                            Created = item.Value.Created,
-                            LastWrite = item.Value.LastWrite,
-                            LastRead = item.Value.LastRead,
-                        });
-                    }
-                }
+                    Partition = partitionIndex++,
+                    Count = partition.Count(),
+                    SizeInBytes = partition.CurrentEstimatedSize(),
+                    Hits = partition.TotalHits(),
+                    Misses = partition.TotalMisses()
+                });
             }
 
             return result;
@@ -261,48 +181,22 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
         public bool Contains(string key)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                if (_partitions[partitionIndex].Contains(key))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
+            => _partitions[ComputePartition(key)].Contains(key);
 
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        public object Get(string key)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                return _partitions[partitionIndex].Get(key);
-            }
-        }
+        public object? Get(string key)
+            => _partitions[ComputePartition(key)].Get(key);
 
         /// <summary>
         /// Gets the cache item with the supplied key value, throws an exception if it is not found.
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        public T Get<T>(string key)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                return _partitions[partitionIndex].Get<T>(key);
-            }
-        }
+        public T? Get<T>(string key)
+            => _partitions[ComputePartition(key)].Get<T>(key);
 
         #endregion
 
@@ -313,30 +207,17 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         /// <typeparam name="T">The type of the object that is stored in cache.</typeparam>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <param name="cachedObject"></param>
-        public bool TryGet<T>(string key, [NotNullWhen(true)] out T? cachedObject)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                return _partitions[partitionIndex].TryGet(key, out cachedObject);
-            }
-        }
+        /// <param name="result">The value associated with the given key.</param>
+        public bool TryGet<T>(string key, out T? result)
+            => _partitions[ComputePartition(key)].TryGet(key, out result);
 
         /// <summary>
         /// Attempts to get the cache item with the supplied key value, returns true of found otherwise false.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        public object? TryGet(string key)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                return _partitions[partitionIndex].TryGet(key);
-            }
-        }
+        /// <param name="result">The value associated with the given key.</param>
+        public bool TryGet(string key, out object? result)
+            => _partitions[ComputePartition(key)].TryGet(key, out result);
 
         #endregion
 
@@ -350,14 +231,7 @@ namespace NTDLS.FastMemoryCache
         /// <param name="approximateSizeInBytes">The approximate size of the object in bytes. If NULL, the size will estimated.</param>
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache. 0 = infinite.</param>
         public void Upsert(string key, object value, int? approximateSizeInBytes, TimeSpan? timeToLive)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                _partitions[partitionIndex].Upsert(key, value, approximateSizeInBytes, timeToLive);
-            }
-        }
+            => _partitions[ComputePartition(key)].Upsert(key, value, approximateSizeInBytes, timeToLive);
 
         /// <summary>
         /// Inserts an item into the memory cache. If it already exists, then it will be updated. The size of the object will be estimated.
@@ -393,16 +267,8 @@ namespace NTDLS.FastMemoryCache
         /// Removes an item from the cache if it is found, returns true if found and removed.
         /// </summary>
         /// <param name="key">The unique cache key used to identify the item.</param>
-        /// <returns>True of the item was removed from cache.</returns>
-        public bool Remove(string key)
-        {
-            int partitionIndex = GetKeyPartition(key);
-
-            lock (_partitions[partitionIndex])
-            {
-                return _partitions[partitionIndex].Remove(key);
-            }
-        }
+        public void Remove(string key)
+            => _partitions[ComputePartition(key)].Remove(key);
 
         /// <summary>
         /// Removes all items from the cache that start with the given string, returns the count of items found and removed.
@@ -413,12 +279,9 @@ namespace NTDLS.FastMemoryCache
         {
             int itemsRemoved = 0;
 
-            for (int i = 0; i < _configuration.PartitionCount; i++)
+            foreach (var partition in _partitions)
             {
-                lock (_partitions[i])
-                {
-                    itemsRemoved += _partitions[i].RemoveItemsWithPrefix(prefix);
-                }
+                itemsRemoved += partition.RemoveItemsWithPrefix(prefix);
             }
 
             return itemsRemoved;
@@ -429,9 +292,9 @@ namespace NTDLS.FastMemoryCache
         /// </summary>
         public void Clear()
         {
-            for (int partitionIndex = 0; partitionIndex < _configuration.PartitionCount; partitionIndex++)
+            foreach (var partition in _partitions)
             {
-                _partitions[partitionIndex].Clear();
+                partition.Clear();
             }
         }
 

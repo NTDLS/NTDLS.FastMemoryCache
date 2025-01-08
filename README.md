@@ -12,12 +12,10 @@ Provides fast and easy to use thread-safe partitioned memory cache for C# that h
 >Using the memory cache is easy, just initialize and upsert some values.
 > You can also pass a configuration parameter to set max memory size, cache scavenge rate and partition count.
 ```csharp
-readonly PartitionedMemoryCache _cache = new();
+PartitionedMemoryCache _cache = new();
 
 public string ReadFileFromDisk(string path)
 {
-    string cacheKey = path.ToLower();
-
     if (_cache.TryGet<string>(cacheKey, out var cachedObject))
     {
         return cachedObject;
