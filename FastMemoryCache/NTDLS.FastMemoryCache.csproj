@@ -12,13 +12,13 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.FastMemoryCache</RepositoryUrl>
     <PackageTags>memory-cache;partitioned-cache;managed-cache;fast-cache;cache;memory</PackageTags>
     <PackageReleaseNotes>
-      Removed proprietary scavenge since it is now supported by IMemoryCache.
+      Dependency updates.
     </PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>NetworkDLS</Authors>
     <Company>NetworkDLS</Company>
-    <Version>1.9.0</Version>
+    <Version>1.9.1</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>64.png</PackageIcon>
     <ApplicationIcon>NTDLS.FastMemoryCache.ico</ApplicationIcon>
@@ -43,7 +43,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
-    <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.2" />
+    <PackageReference Include="System.Runtime.Caching" Version="9.0.2" />
   </ItemGroup>
 </Project>
