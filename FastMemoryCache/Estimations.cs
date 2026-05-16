@@ -20,8 +20,11 @@ namespace NTDLS.FastMemoryCache
         /// Estimates the amount of memory that would be consumed by a class instance.
         /// </summary>
         static public int ObjectSize(object? obj)
+            => ObjectSize(obj, new HashSet<object>(ReferenceEqualityComparer.Instance));
+
+        private static int ObjectSize(object? obj, HashSet<object> visited)
         {
-            if (obj == null)
+            if (obj == null || !visited.Add(obj))
             {
                 return 0;
             }
@@ -30,11 +33,12 @@ namespace NTDLS.FastMemoryCache
 
             var type = obj.GetType();
 
-            var fieldsAndProperties = (FieldInfo[])_reflectionCache.Get(type.Name);
+            var cacheKey = type.AssemblyQualifiedName ?? type.FullName ?? type.Name;
+            var fieldsAndProperties = (FieldInfo[])_reflectionCache.Get(cacheKey);
             if (fieldsAndProperties == null)
             {
                 fieldsAndProperties = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                _reflectionCache.Add(type.Name, fieldsAndProperties, _slidingOneMinute);
+                _reflectionCache.Add(cacheKey, fieldsAndProperties, _slidingOneMinute);
             }
 
             foreach (var field in fieldsAndProperties)
@@ -42,7 +46,7 @@ namespace NTDLS.FastMemoryCache
                 var fieldType = field.FieldType;
                 var fieldValue = field.GetValue(obj);
 
-                totalSize += ObjectFieldSize(fieldType, fieldValue);
+                totalSize += ObjectFieldSize(fieldType, fieldValue, visited);
             }
 
             return totalSize;
@@ -52,6 +56,9 @@ namespace NTDLS.FastMemoryCache
         /// Estimates the amount of memory that would be consumed by a field in a class instance.
         /// </summary>
         static public int ObjectFieldSize(Type? type, object? obj)
+            => ObjectFieldSize(type, obj, new HashSet<object>(ReferenceEqualityComparer.Instance));
+
+        private static int ObjectFieldSize(Type? type, object? obj, HashSet<object> visited)
         {
             if (type == null || obj == null)
             {
@@ -66,7 +73,7 @@ namespace NTDLS.FastMemoryCache
                 }
                 else if (type.IsGenericType)
                 {
-                    return ObjectSize(obj);
+                    return ObjectSize(obj, visited);
                 }
                 else
                 {
@@ -89,7 +96,7 @@ namespace NTDLS.FastMemoryCache
                         var arrayValue = array.GetValue(i);
                         var arrayElementType = arrayValue?.GetType();
 
-                        totalSize += ObjectFieldSize(arrayElementType, arrayValue);
+                        totalSize += ObjectFieldSize(arrayElementType, arrayValue, visited);
                     }
                 }
 
@@ -97,7 +104,7 @@ namespace NTDLS.FastMemoryCache
             }
             else
             {
-                return ObjectSize(obj);
+                return ObjectSize(obj, visited);
             }
         }
     }

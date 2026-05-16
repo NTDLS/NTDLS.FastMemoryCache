@@ -122,6 +122,12 @@ namespace NTDLS.FastMemoryCache
 
         #endregion
 
+        /// <summary>
+        /// Returns a copy of all lookup keys defined across all cache partitions.
+        /// </summary>
+        public IEnumerable<string?> CacheKeys()
+            => _partitions.SelectMany(p => p.CacheKeys());
+
         #region Metrics.
 
         /// <summary>
