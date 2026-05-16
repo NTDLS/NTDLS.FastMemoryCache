@@ -60,14 +60,16 @@ namespace NTDLS.FastMemoryCache
         {
             _configuration = new SingleCacheConfiguration();
 
-            if (_configuration.SizeLimitBytes < Defaults.MinimumMemoryBytesPerPartition)
+            long? sizeLimit = null;
+            if (_configuration.SizeLimitBytes != 0)
             {
-                _configuration.SizeLimitBytes = Defaults.MinimumMemoryBytesPerPartition;
+                sizeLimit = Math.Max(_configuration.SizeLimitBytes, Defaults.MinimumMemoryBytesPerPartition);
+                _configuration.SizeLimitBytes = sizeLimit.Value;
             }
 
             _memoryCache = new MemoryCache(new MemoryCacheOptions
             {
-                SizeLimit = _configuration.SizeLimitBytes,
+                SizeLimit = sizeLimit,
                 TrackStatistics = true,
                 TrackLinkedCacheEntries = _configuration.TrackLinkedCacheEntries,
                 CompactionPercentage = _configuration.CompactionPercentage,
@@ -82,15 +84,20 @@ namespace NTDLS.FastMemoryCache
         {
             _configuration = configuration.Clone();
 
-            if (_configuration.SizeLimitBytes < Defaults.MinimumMemoryBytesPerPartition)
+            long? sizeLimit = null;
+            if (_configuration.SizeLimitBytes != 0)
             {
-                _configuration.SizeLimitBytes = Defaults.MinimumMemoryBytesPerPartition;
+                sizeLimit = Math.Max(_configuration.SizeLimitBytes, Defaults.MinimumMemoryBytesPerPartition);
+                _configuration.SizeLimitBytes = sizeLimit.Value;
             }
 
             _memoryCache = new MemoryCache(new MemoryCacheOptions
             {
-                SizeLimit = _configuration.SizeLimitBytes,
-                TrackStatistics = true
+                SizeLimit = sizeLimit,
+                TrackStatistics = true,
+                TrackLinkedCacheEntries = _configuration.TrackLinkedCacheEntries,
+                CompactionPercentage = _configuration.CompactionPercentage,
+                ExpirationScanFrequency = _configuration.ExpirationScanFrequency
             });
         }
 
