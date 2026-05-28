@@ -213,13 +213,9 @@ namespace NTDLS.FastMemoryCache
         /// <param name="timeToLive">The amount of time from insertion, update or last read that the item should live in cache.</param>
         public void Upsert(string key, object? value, int? approximateSizeInBytes, TimeSpan? timeToLive)
         {
-            if (_configuration.EstimateObjectSize)
+            if (approximateSizeInBytes == null && _configuration.EstimateObjectSize)
             {
-                approximateSizeInBytes ??= Estimations.ObjectSize(value);
-            }
-            else
-            {
-                approximateSizeInBytes = 0;
+                approximateSizeInBytes = Estimations.ObjectSize(value);
             }
 
             if (!_configuration.IsCaseSensitive)
